@@ -1,0 +1,32 @@
+{
+  "name": "dropper-website-api",
+  "version": "0.1.4",
+  "description": "Dropper Website api",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node index.js",
+    "test": "node --expose-internals ./node_modules/.bin/mocha $(find test -name '*spec.js') --exit --recursive"
+  },
+  "author": "Jaap van der Kreeft",
+  "license": "MIT",
+  "dependencies": {
+    "@hapi/hapi": "^18.4.0",
+    "config": "^3.2.5",
+    "email-validator": "^2.0.4",
+    "error-types": "git+https://github.com/emcultuur/error-types.git",
+    "hapi-cors": "^1.0.3",
+    "hapi-plugin-auth": "git+https://github.com/toxus/hapi-plugin-auth.git",
+    "jsonfile": "^5.0.0",
+    "lodash": "^4.17.15",
+    "logger": "git+https://github.com/emcultuur/logger.git",
+    "mongoose": "^5.8.11",
+    "postmark": "^2.3.5",
+    "uuid": "^3.4.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-http": "^4.3.0",
+    "mocha": "^6.2.2",
+    "nyc": "^14.1.1"
+  }
+}

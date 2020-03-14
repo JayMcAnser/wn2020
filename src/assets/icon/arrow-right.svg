@@ -1,0 +1,16 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+      }
+
+      .cls-2 {
+        fill: #474849;
+      }
+    </style>
+  </defs>
+  <title>svg_symbool</title>
+  <rect class="cls-1" width="37" height="37"/>
+  <polygon class="cls-2" points="16.49 23.82 15.51 22.68 20.35 18.5 15.51 14.32 16.49 13.18 22.65 18.5 16.49 23.82"/>
+</svg>

@@ -1,9 +1,8 @@
 .quasar
 .DS_Store
 .thumbs.db
-.nyc_output
 node_modules
-/dist
+# /dist
 /src-cordova/node_modules
 /src-cordova/platforms
 /src-cordova/plugins
@@ -11,14 +10,8 @@ node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-/data/hash-store/
-/log/error.log
-/log/combined.log
-/backup
-/src/log
-/test/data/hash-store
-/data/hash-store
-/dump
+_save
+
 # Editor directories and files
 .idea
 .vscode
@@ -28,7 +21,8 @@ yarn-error.log*
 *.sln
 
 /src/statics/indexed.do/
+/api/logging
+/api/test/storeData
 logging
-test/temp
-temp
-data/config/test.*
+/data
+test/jest/coverage/

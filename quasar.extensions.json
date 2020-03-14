@@ -1,0 +1,23 @@
+{
+  "@quasar/testing-unit-jest": {
+    "babel": false,
+    "options": []
+  },
+  "@quasar/icon-genie": {
+    "minify_dev": "pngquant",
+    "minify_build": "zopfli",
+    "cordova": {
+      "background_color": "#000074",
+      "splashscreen_type": "pure"
+    },
+    "build_always": false,
+    "__internal": {
+      "dev": {
+        "spa": {
+          "iconHash": "25f5994de12b776350c3b7a6fc15fbef"
+        }
+      },
+      "build": {}
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "Storage": {
+    "directory": "test/storeData",
+    "newsletter": "newsletter.json"
+  },
+  "Logging": {
+     "transports": [
+       {
+         "type": "console",
+         "level": "error",
+         "colorize": true
+       }
+     ]
+  },
+  "Mail": {
+    "blockSendMail": true
+  }
+}

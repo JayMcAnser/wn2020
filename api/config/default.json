@@ -1,0 +1,49 @@
+{
+  "Server" : {
+    "Connection": {
+      "port" : "3000",
+      "cors" : true,
+      "labels" : ["api"],
+      "serverPrefix" : false
+    }
+  },
+  "Logging": {
+    "transports": [
+      {
+        "type": "console",
+        "level": "info",
+        "colorize": true
+      },
+      {
+        "type": "file",
+        "level": "warn",
+        "filename": "logging/error.log"
+      }
+    ]
+  },
+  "Storage": {
+    "directory": "../data",
+    "newsletter": "newsletter.json"
+  },
+  "Database": {
+    "connectionString": "mongodb+srv://dropperweb:rE-4EGNsPV6LzgP@dropperweb-ussdu.azure.mongodb.net/test?retryWrites=true&w=majority"
+  },
+  "Mail" : {
+    "DoSendMail-blockSendMail": true,
+    "postmarkKey": "3f9c2710-f11b-4040-838f-773048faaa78",
+    "templates": {
+      "newsletterConfirm": {
+        "from": "info@dropper.info",
+        "name": "name_Value",
+        "action_url": "https://www.dropper.info/confirm",
+        "key": "00000",
+        "support_email": "info@dropper.info",
+        "sender_name": "Pier Taylor",
+        "product_name": "Dropper",
+        "product_url": "https://www.dropper.info",
+        "company_name": "Dropper",
+        "company_address": "Lange Herenvest 20, 2011BS Haarlem"
+      }
+    }
+  }
+}
