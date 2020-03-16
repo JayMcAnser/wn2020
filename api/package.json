@@ -1,26 +1,29 @@
 {
-  "name": "dropper-website-api",
-  "version": "0.1.4",
-  "description": "Dropper Website api",
+  "name": "watsnext-2020-ap1",
+  "version": "0.0.1",
+  "description": "WatsNext Website api",
   "main": "index.js",
   "scripts": {
     "dev": "node index.js",
+    "clear": "killall node",
     "test": "node --expose-internals ./node_modules/.bin/mocha $(find test -name '*spec.js') --exit --recursive"
   },
-  "author": "Jaap van der Kreeft",
+  "author": "Jay Mc Anser",
   "license": "MIT",
   "dependencies": {
-    "@hapi/hapi": "^18.4.0",
-    "config": "^3.2.5",
+    "@hapi/hapi": "^19.1.1",
+    "bcryptjs": "^2.4.3",
+    "config": "^3.3.0",
     "email-validator": "^2.0.4",
     "error-types": "git+https://github.com/emcultuur/error-types.git",
     "hapi-cors": "^1.0.3",
-    "hapi-plugin-auth": "git+https://github.com/toxus/hapi-plugin-auth.git",
+    "hapi-plugin-auth": "^0.2.0",
     "jsonfile": "^5.0.0",
+    "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.15",
     "logger": "git+https://github.com/emcultuur/logger.git",
-    "mongoose": "^5.8.11",
-    "postmark": "^2.3.5",
+    "mongoose": "^5.9.4",
+    "postmark": "^2.5.0",
     "uuid": "^3.4.0"
   },
   "devDependencies": {

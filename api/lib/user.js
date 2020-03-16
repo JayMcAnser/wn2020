@@ -4,36 +4,19 @@
  */
 const _ = require('lodash');
 const ErrorTypes = require('error-types');
+const Config = require('config');
 const JsonWebToken = require('jsonwebtoken');
-
-// const Customer = require('./customer');
-const Customer = {
-  find(name) {
-    return {
-      didLogin: true
-    }
-  }
-
-
-}
-
-// const Customer = 'test';
-// const Password = '123456';
-// const Username = 'api.call';
-// const RefreshToken = 'eyBBBJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJrZXkiOiJ2YWwiLCJpYXQiOjE0MjI2MDU0NDV9.eUiabuiKv-8PYk2AkGY4Fb5KMZeorYBLw2a439tPQD5lM'
-
-
+const User = require('../model/user');
 /**
  * object that holds the user specific information
  */
-
-const User = {
+const AuthUser = {
   /**
    * returns the secret key of the server.
    * @return {string}
    */
   get authKey() {
-    return 'NeverShareYourSecret';
+    return Config.get('Security.jwtAuthKey');
   },
 
   /**
@@ -50,7 +33,9 @@ const User = {
    * @return Promise same fields AND: isExisting if account aready existed
    */
   create(options) {
-    return Promise.reject('This interface can not create accounts');
+    User.create(options).then( (usr) => {
+
+    });
   },
   /**
    *
@@ -93,4 +78,4 @@ const User = {
   }
 };
 
-module.exports.User = User;
+module.exports.User = AuthUser;

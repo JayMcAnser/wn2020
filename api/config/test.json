@@ -1,9 +1,10 @@
 {
-  "Storage": {
-    "directory": "test/storeData",
-    "newsletter": "newsletter.json"
+  "Database": {
+    "Mongo": {
+      "database": "testing"
+    }
   },
-  "Logging": {
+   "Logging": {
      "transports": [
        {
          "type": "console",
@@ -11,8 +12,6 @@
          "colorize": true
        }
      ]
-  },
-  "Mail": {
-    "blockSendMail": true
   }
+
 }

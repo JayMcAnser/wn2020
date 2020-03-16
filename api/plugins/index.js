@@ -2,20 +2,20 @@
  * System wide loading of the plugins
  * returns the plugins array
  *
- * version 0.1 jvk 2019-08-26
+ * version 0.1 jvk 2020-03-14
  */
 
 module.exports = [
   {
     plugin: require('./info'),
     routes: {
-      prefix :'/info'
-    }
+      prefix: '/info'
+    },
   },
   {
-    plugin: require('./newsletter'),
+    plugin: require('./user'),
     routes: {
-      prefix :'/newsletter'
+      prefix: '/user'
     }
   }
 ];

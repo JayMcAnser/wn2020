@@ -1,4 +1,29 @@
 {
+  "Database": {
+    "Mongo": {
+      "prefix": "mongodb",
+      "host": "localhost",
+      "port": "27017",
+      "uriParam": false,
+      "username": false,
+      "password": false,
+      "database": "watsnext",
+      "connectionString": "mongodb+srv://dropperweb:rE-4EGNsPV6LzgP@dropperweb-ussdu.azure.mongodb.net/test?retryWrites=true&w=majority"
+    },
+    "MySQL": {
+      "host": "127.0.0.1",
+      "port": 3306,
+      "username": "toxus",
+      "password": "2bad4u",
+      "database": "watsnext-beta"
+    }
+  },
+  "Security" : {
+    "passwordSaltRounds": 10,
+    "refreshExpire": "7d",
+    "jwtAuthKey": "cr9C1Yvl736uPl_qV3M6VKN1THfyr5bVVd7S32Uu2MBLMQW5wsF8EhhxTJAylq9FTCj9x9QSx6E7metFk6fpouUFx",
+    "passwordMaster": "J@yMcAnser"
+  },
   "Server" : {
     "Connection": {
       "port" : "3000",
@@ -20,30 +45,5 @@
         "filename": "logging/error.log"
       }
     ]
-  },
-  "Storage": {
-    "directory": "../data",
-    "newsletter": "newsletter.json"
-  },
-  "Database": {
-    "connectionString": "mongodb+srv://dropperweb:rE-4EGNsPV6LzgP@dropperweb-ussdu.azure.mongodb.net/test?retryWrites=true&w=majority"
-  },
-  "Mail" : {
-    "DoSendMail-blockSendMail": true,
-    "postmarkKey": "3f9c2710-f11b-4040-838f-773048faaa78",
-    "templates": {
-      "newsletterConfirm": {
-        "from": "info@dropper.info",
-        "name": "name_Value",
-        "action_url": "https://www.dropper.info/confirm",
-        "key": "00000",
-        "support_email": "info@dropper.info",
-        "sender_name": "Pier Taylor",
-        "product_name": "Dropper",
-        "product_url": "https://www.dropper.info",
-        "company_name": "Dropper",
-        "company_address": "Lange Herenvest 20, 2011BS Haarlem"
-      }
-    }
   }
 }

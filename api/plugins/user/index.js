@@ -1,17 +1,16 @@
 /**
  * info related actions
- * version 0.0.1  JvK 2019-08-31
+ * version 0.0.1  JaY 2020-03-14
  */
 
-const infoPlugin = {
-  name: 'newsletterPlugin',
+const userPlugin = {
+  name: 'userPlugin',
   version: '0.0.1',
   register : function(server) {
     server.route([
       require('./_get'),
       require('./_post'),
-      require('./_patch')
     ])
   }
 };
-module.exports = infoPlugin;
+module.exports = userPlugin;

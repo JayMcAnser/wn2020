@@ -1,10 +1,10 @@
 {
   "name": "dropper-website",
-  "version": "0.2.3",
-  "description": "The user website for Dropper",
-  "productName": "Dropper Website",
-  "cordovaId": "info.dropper.app",
-  "author": "Jaap van der Kreeft <jaap@toxus.nl>",
+  "version": "0.0.1",
+  "description": "LIMA WatsNext 2020",
+  "productName": "WatsNext",
+  "cordovaId": "nl.watsnext",
+  "author": "Jay Mc Anser <jay@mcanser.com>",
   "private": true,
   "scripts": {
     "build": "quasar build --mode spa",

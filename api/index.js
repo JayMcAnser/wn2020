@@ -4,6 +4,7 @@ process.env["NODE_CONFIG_DIR"] = __dirname + '/config/';
 
 const Hapi = require('@hapi/hapi');
 const server = require('./lib/server');
+const MongoDb = require('./lib/db-mongo');
 const UserObject = require('./lib/user');
 const HapiAuth = require('hapi-plugin-auth');
 const Logger = require('./lib/logging');
@@ -22,7 +23,12 @@ const start = async function() {
       methods: ['POST, PATCH, PUT, GET, OPTIONS'],
       headers: ['Accept', 'Content-Type', 'Authorization']
     }
-  })
+  });
+  let db = new MongoDb();
+ // await db.connect();
+  // server.decorate('request', 'getDb', function() {
+  //   return db
+  // });
   await server.register(HapiAuth.plugin, { routes: {prefix: '/auth'}});
   await server.register(require('./plugins'));
   await server.start();

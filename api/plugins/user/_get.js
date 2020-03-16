@@ -5,6 +5,8 @@
  *
  */
 const ErrorType = require('error-types');
+const JsonFile = require('jsonfile');
+const Path = require('path');
 
 module.exports = getRoute = {
   method: 'GET',
@@ -14,7 +16,11 @@ module.exports = getRoute = {
   },
   handler: async function(request, h) {
     try {
-      return 'hi, do you want a newsletter?'
+      let data = JsonFile.readFileSync(Path.join(__dirname, '../../package.json'));
+      // console.log(process.env);
+      return {
+        message: 'Should return something'
+      }
     } catch (err) {
       return ErrorType.toBoomError(err, request);
     }

@@ -17,9 +17,9 @@ module.exports = getRoute = {
   handler: async function(request, h) {
     try {
       let data = JsonFile.readFileSync(Path.join(__dirname, '../../package.json'));
-      console.log(process.env)
+      // console.log(process.env);
       return {
-        message: 'dropper api 2',
+        message: 'watsnext api 2',
         version: data.version,
         env: process.env.NODE_ENV ? 'no env' : process.env.NODE_ENV
       }
