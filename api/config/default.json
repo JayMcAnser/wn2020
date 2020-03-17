@@ -24,6 +24,10 @@
     "jwtAuthKey": "cr9C1Yvl736uPl_qV3M6VKN1THfyr5bVVd7S32Uu2MBLMQW5wsF8EhhxTJAylq9FTCj9x9QSx6E7metFk6fpouUFx",
     "passwordMaster": "J@yMcAnser"
   },
+  "Setup": {
+    "emailRoot": "info@watsnext.nl",
+    "passwordRoot": "VerySecret"
+  },
   "Server" : {
     "Connection": {
       "port" : "3000",

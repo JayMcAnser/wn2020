@@ -42,8 +42,16 @@ GroupModel.statics.get = function(id) {
   return this.findById(id);
 };
 
+/**
+ * add the user to this group and updates the user definition
+ * does NOT save
+ * @param user
+ */
 GroupModel.methods.userAdd = function (user) {
   this.users.push(user);
+  for (let l = 0; l < this.rights.length; l++) {
+    user.rightsAdd(this.rights[l].part, this.rights[l].rights, this._id)
+  }
 };
 
 

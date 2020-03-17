@@ -8,7 +8,7 @@
      "transports": [
        {
          "type": "console",
-         "level": "error",
+         "level": "info",
          "colorize": true
        }
      ]
