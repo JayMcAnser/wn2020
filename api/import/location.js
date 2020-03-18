@@ -4,12 +4,11 @@
  */
 
 const Distribution = require('../model/distribution');
+const Logging = require('../lib/logging');
 const Address = require('../model/address');
+const recordValue = require('../import/import-helper').recordValue;
+const makeNumber = require('../import/import-helper').makeNumber;
 // left: Mongo, right: Mysql
-
-function makeNumber(str) {
-  return parseInt(str.replace(',', '.'))
-}
 
 
 const fieldMap = {
@@ -29,8 +28,10 @@ const fieldMap = {
 
   shippingCosts: (rec) => { return makeNumber(rec.shipping_costs); },
   otherCosts: (rec) => { return makeNumber(rec.other_costs); },
-  productionCosts: (rec) => { return makeNumber(rec.other_costs); },
+  productionCosts: (rec) => { return makeNumber(rec.production_costs); },
+
 };
+
 class LocationImport {
 
   constructor(options= {}) {
@@ -38,13 +39,29 @@ class LocationImport {
     this._step = 5;
   }
 
-  async _recordValue(rec, part) {
-    if (typeof part === 'string') {
-      return rec[part]
-    } else {
-      return await part(rec);
+  async _convertRecord(record, options = {}) {
+    let dis = await Distribution.findOne({locationId: record.location_ID});
+    if (!dis) {
+      dis = {}
     }
+    for (let fieldName in fieldMap) {
+      if (!fieldMap.hasOwnProperty(fieldName)) {
+        continue
+      }
+      dis[fieldName] = await recordValue(record, fieldMap[fieldName], dis);
+    }
+    try {
+      if (dis._id) {
+        dis = await dis.save();
+      } else {
+        dis = await Distribution.create(dis);
+      }
+    } catch (e) {
+      Logging.error(`error importing location[${record.location_ID}]: ${e.message}`)
+    }
+    return dis;
   }
+
   async run(con) {
     let vm = this;
     return new Promise(async (resolve, reject) => {
@@ -57,31 +74,7 @@ class LocationImport {
         qry = await con.query(sql);
         if (qry.length > 0) {
           for (let l = 0; l < qry.length; l++) {
-            let record = qry[l];
-            let dis = await Distribution.findOne({locationId: qry.location_ID});
-            if (!dis) {
-              dis = {}
-            }
-            for (let fieldName in fieldMap) {
-              if (!fieldMap.hasOwnProperty(fieldName)) {
-                continue
-              }
-              dis[fieldName] = await this._recordValue(record, fieldMap[fieldName]);
-            }
-            try {
-              if (dis._id) {
-                dis = await dis.save();
-                counter.update++
-              } else {
-                dis = await Distribution.create(dis);
-                counter.add++
-              }
-            } catch (e) {
-              counter.errors.push(e)
-            }
-            // now load the address information
-
-
+            this._convertRecord(qry[l]);
             counter.count++;
           }
           start++;
@@ -89,6 +82,10 @@ class LocationImport {
       } while (qry.length > 0 && (this._limit === 0 || counter.count < this._limit));
       return resolve(counter)
     })
+  }
+
+  async runOnData(record) {
+    return this._convertRecord(record);
   }
 }
 

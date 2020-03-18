@@ -8,12 +8,6 @@ const ObjectId = Schema.Types.ObjectId;
 const Config = require('config');
 const ErrorType = require('error-types');
 
-const AddressSchema = {
-  addressId: String,
-  isContact: Boolean,
-  isInvoice: Boolean,
-  isMail: Boolean,
-};
 
 const DistributionSchema = {
   code: {
