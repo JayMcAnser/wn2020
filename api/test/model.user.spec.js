@@ -2,7 +2,7 @@
  * Test the user model
  */
 
-const Db = require('./init.db');
+const Db = require('./init.db').DbMongo;
 const chai = require('chai');
 const assert = chai.assert;
 const User = require('../model/user');

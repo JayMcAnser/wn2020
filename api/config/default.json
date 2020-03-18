@@ -11,11 +11,11 @@
       "connectionString": "mongodb+srv://dropperweb:rE-4EGNsPV6LzgP@dropperweb-ussdu.azure.mongodb.net/test?retryWrites=true&w=majority"
     },
     "MySQL": {
-      "host": "127.0.0.1",
+      "host": "mysql.li-ma.nl",
       "port": 3306,
       "username": "toxus",
       "password": "2bad4u",
-      "database": "watsnext-beta"
+      "database": "watsnext_test"
     }
   },
   "Security" : {
@@ -27,6 +27,9 @@
   "Setup": {
     "emailRoot": "info@watsnext.nl",
     "passwordRoot": "VerySecret"
+  },
+  "Sync": {
+    "pullAddress": false
   },
   "Server" : {
     "Connection": {

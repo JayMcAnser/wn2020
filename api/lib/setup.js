@@ -5,6 +5,7 @@
  */
 const Group = require('../model/group');
 const User = require('../model/user');
+const Address = require('../model/address');
 const Config = require('config');
 const Logging = require('./logging');
 
@@ -67,6 +68,13 @@ class Setup {
     return true;
   }
 
+  async createAddress() {
+    let addr = await Address.findOne({guid: 'DISTR_NOT_FOUND'});
+    if (!addr) {
+      await Address.create({addressId: -1, guid: 'DISTR_NOT_FOUND', name: 'Distribution address not found'})
+    }
+    return true;
+  }
   /**
    * check the system for errors
    * @return {Promise<boolean>}
@@ -74,10 +82,11 @@ class Setup {
   async run() {
     if (this.checkConfig()) {
       return false;
-    };
+    }
     let grp = await this.createGroups();
     let usr = await this.createRootUsers(grp);
-    return !!usr
+    let addr = await this.createAddress();
+    return Promise.resolve(!!usr)
   }
 }
 module.exports = Setup;

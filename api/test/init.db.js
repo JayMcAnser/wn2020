@@ -3,9 +3,13 @@
  */
 const init = require('./init');
 const DbMongo = require('../lib/db-mongo');
+const DbMySQL = require('../lib/db-mysql');
 
 async function initDb() {
-  return await DbMongo.connect()
+  await DbMongo.connect();
+  await DbMySQL.connect();
 }
 initDb();
-module.exports = DbMongo
+
+module.exports.DbMongo = DbMongo;
+module.exports.DbMySQL = DbMySQL;
