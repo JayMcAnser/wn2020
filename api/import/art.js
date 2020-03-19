@@ -85,7 +85,7 @@ const fieldMap = {
   preservationHistory: (rec, mongoRec) => {
     return insertField(rec.preservation_history, 'history', 'preservation', mongoRec, 'fields');
   },
-  preservationArtist_opinion: (rec, mongoRec) => {
+  preservationArtistOpinion: (rec, mongoRec) => {
     return insertField(rec.preservation_artist_opinion, 'artist opinion', 'preservation', mongoRec, 'fields');
   },
   preservationIrreplacable_parts: (rec, mongoRec) => {
