@@ -42,9 +42,16 @@ const FieldMap = {
   projection: {type: 'boolean', name: 'projection', group: 'presentation'},
   carriers: {type: 'string', name: 'carriers', group: 'presentation'},
   objects: {type: 'string', name: 'objects', group: 'presentation'},
+
+  owner: {type: 'address', name: 'owner', group: 'testing'},
+  also: {type: 'related', model: 'Address', name: 'also', group: 'testing'},
 };
 
 
+const AddressLink = {
+  type: Schema.Types.ObjectId,
+  ref: 'Address'
+};
 const FieldSchema = {
   def: {  // the name in the FieldMap
     type: String,
@@ -54,6 +61,16 @@ const FieldSchema = {
   boolean: Boolean,
   number: Number,
   date: Date,
+  related: {
+    type: Schema.Types.ObjectId,
+    // ref: 'Address'
+    refPath: '_fields.onModel'
+  },
+  onModel: {
+    type: String,
+    enum: ['Address', 'Distribution']
+  },
+  address: AddressLink,
 };
 
 const AddressSchema = {
@@ -120,6 +137,8 @@ ArtFlexModel.statics.findField = function(search = {}) {
     qry['_fields.' + FieldMap[key].type] = search[key];
     qry['_fields.def'] = key;
   }
+  let  f= this.find(qry);
   return this.find(qry);
 };
+
 module.exports = Mongoose.Model('ArtFlex', ArtFlexModel);

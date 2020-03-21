@@ -19,10 +19,14 @@ const FlexModel = {
     for (let key in data) {
       if (!data.hasOwnProperty(key)) { continue }
       if (fieldIndexs[key] === undefined && FieldMap.hasOwnProperty(key)) {
-        //parent._fields.push({ def: key, text: data[key]})  // add the field
-        parent._fields.push({def: key, [FieldMap[key].type]: data[key]});
+        let obj = {def: key, [FieldMap[key].type]: data[key]};
+        if (FieldMap[key].model) {
+          obj.onModel = FieldMap[key].model;
+        }
+        parent._fields.push(obj);
       } else if(FieldMap.hasOwnProperty(key)) {
         parent._fields[fieldIndexs[key]][FieldMap[key].type] = data[key]; // update the field
+        //    parent._fields[fieldIndexs[key]].onModel = FieldMap[key].model;
       } else { // put it on the base record
         parent[key] = data[key];
         parent.markModified(key);
