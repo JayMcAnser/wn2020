@@ -6,6 +6,7 @@ const Db = require('./init.db').DbMongo;
 const chai = require('chai');
 const assert = chai.assert;
 const ArtFlex = require('../model/art-flex');
+const Address = require('../model/address');
 const Setup = require('../lib/setup');
 
 describe('model.art-flex', () => {
@@ -19,14 +20,14 @@ describe('model.art-flex', () => {
 
   let art;
   it('create', () => {
-    return ArtFlex.create({}, {artId: 1}).then( (c) => {
+    return ArtFlex.create({artId: 1}).then( (c) => {
       art = c;
-
       return ArtFlex.create({
-        title: 'other one'
-      },{ artId: 99}).then((r) => {
-        let o = r.objectGet();
-        assert.equal(o.title,'other one');
+        title: 'other one', artId: 99}
+        ).then((r) => {
+          let o = r.objectGet();
+          assert.equal(o.title,'other one', 'on the virtual record');
+          assert.equal(o.artId, 99, 'on the base record')
       })
     })
   });
@@ -77,7 +78,7 @@ describe('model.art-flex', () => {
   });
 
   it('local and _field', async() => {
-    let rec = await ArtFlex.create({title: 'number 2'}, {artId: 2});
+    let rec = await ArtFlex.create({title: 'number 2', artId: 2});
     await rec.save();
     rec = await ArtFlex.find({artId: 1});
     assert.equal(rec.length, 1);
@@ -90,4 +91,34 @@ describe('model.art-flex', () => {
 
   });
 
+  it('test ref', async () => {
+    let rec = await ArtFlex.create({title: 'number 8', artId: 8});
+    let addr1 = await Address.create({addressId: 101, name: 'ad 101'});
+    let addr2 = await Address.create({addressId: 102, name: 'ad 102', department: 'xx'});
+    let addr3 = await Address.create({addressId: 103, name: 'ad 103', department: 'yy'} );
+
+    rec.work = {addr: addr1._id, number: 11};
+    await rec.save();
+    return ArtFlex.find({artId: 8})
+      .populate('work.addr')
+      .then( async (r) => {
+        // assert.equal(r.work.name, 'ad 103');
+        assert.equal(r[0].work.addr.name, 'ad 101');
+        assert.equal(r[0].work.number, 11);
+
+        rec.multi.push({addr: addr2._id, number: 22});
+        rec.multi.push({addr: addr3._id, number: 33});
+        await rec.save();
+        return ArtFlex.find({artId: 8})
+          .populate('multi.addr')
+          .then((r) => {
+            // assert.equal(r.work.name, 'ad 103');
+            assert.equal(r[0].multi[0].addr.name, 'ad 102');
+            assert.equal(r[0].multi[0].number, 22);
+            assert.equal(r[0].multi.length, 2, 'both address');
+            assert.equal(r[0].multi[1].addr.name, 'ad 103');
+          });
+
+    });
+  })
 });
