@@ -29,7 +29,8 @@
     "passwordRoot": "VerySecret"
   },
   "Sync": {
-    "pullAddress": false
+    "pullAddress": true,
+    "pullCarrier": true
   },
   "Server" : {
     "Connection": {

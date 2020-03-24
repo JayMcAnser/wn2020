@@ -134,28 +134,30 @@ describe('model.art-flex', () => {
   // });
 
 
-  it('address field', async () => {
-    let addr1 = await Address.create({addressId: 201, name: 'ad 201'});
-    let rec = await ArtFlex.create({title: 'number 201', artId: 201});
-    // rec._fields.push({address: addr1, def: 'owner'});
-    rec.objectSet({owner: addr1});
-    rec = await rec.save();
-   // return ArtFlex.find({artId: 201})
-    return ArtFlex.findField({title: 'number 201'})
-      .populate('_fields.address')
-      .then( (r1) => {
-      //   r = await r1[0].populate('_fields.address')
-        r = r1[0];
-        // assert.equal(r.work.name, 'ad 103');
-        assert.equal(r._fields[1].address.name, 'ad 201');
-        let obj = r.objectGet([], ['owner']);
-        assert.isDefined(obj);
-        assert.equal(obj.owner.name, 'ad 201');
-      });
-  });
+  // it('address field', async () => {
+  //   let addr1 = await Address.create({addressId: 201, name: 'ad 201'});
+  //   let rec = await ArtFlex.create({title: 'number 201', artId: 201});
+  //   // rec._fields.push({address: addr1, def: 'owner'});
+  //   rec.objectSet({owner: addr1});
+  //   rec = await rec.save();
+  //  // return ArtFlex.find({artId: 201})
+  //   return ArtFlex.findField({title: 'number 201'})
+  //     .populate('_fields.address')
+  //     .then( (r1) => {
+  //     //   r = await r1[0].populate('_fields.address')
+  //       r = r1[0];
+  //       // assert.equal(r.work.name, 'ad 103');
+  //       assert.equal(r._fields[1].address.name, 'ad 201');
+  //       let obj = r.objectGet([], ['owner']);
+  //       assert.isDefined(obj);
+  //       assert.equal(obj.owner.name, 'ad 201');
+  //     });
+  // });
 
   it('test flex field', async () => {
     let addr1 = await Address.create({addressId: 202, name: 'ad 202'});
+    addr1 = await addr1.save();
+
     let rec = await ArtFlex.create({title: 'number 202', artId: 202});
     // rec._fields.push({address: addr1, def: 'owner'});
     rec.objectSet({also: addr1});
@@ -164,13 +166,9 @@ describe('model.art-flex', () => {
     return ArtFlex.findField({title: 'number 202'})
       .populate('_fields.related')
       .then( (r1) => {
-        //   r = await r1[0].populate('_fields.address')
         r = r1[0];
-        // assert.equal(r.work.name, 'ad 103');
-        assert.equal(r._fields[1].related.name, 'ad 202');
-        // let obj = r.objectGet([], ['owner']);
-        // assert.isDefined(obj);
-        // assert.equal(obj.owner.name, 'ad 201');
+        let obj = r.objectGet(); //r.objectGet(['title', {also: ['name']}]);
+        assert.equal(obj.also.name, 'ad 202');
       });
   });
 

@@ -3,11 +3,11 @@
  */
 
 const Db = require('./init.db');
-const DbMysql = Db.DbMySQL;
+const DbMySql = Db.DbMySQL;
 const DbMongo = Db.DbMongo;
 const chai = require('chai');
 const assert = chai.assert;
-const ImportLocation = require('../import/location');
+const ImportLocation = require('../import/locations');
 const Distribution = require('../model/distribution');
 const Address = require('../model/address');
 const Setup = require('../lib/setup');
@@ -18,7 +18,7 @@ describe('import.location', () => {
   before( () => {
     return Distribution.deleteMany({}).then( () => {
       return Address.deleteMany({}).then( () => {
-        return DbMysql.connect().then((con) => {
+        return DbMySql.connect().then((con) => {
           mySQL = con;
           let setup = new Setup()
           return setup.run();
@@ -75,19 +75,20 @@ describe('import.location', () => {
       "is_rental": 1
     };
     return imp.runOnData(record).then( (mRec) => {
-      assert.equal(mRec.locationId, 1);
-      assert.equal(mRec.code, '2005-0001');
-      assert.equal(mRec.invoiceNumber, '112233');
+      let obj = mRec.objectGet();
+      assert.equal(obj.locationId, 1);
+      assert.equal(obj.code, '2005-0001');
+      assert.equal(obj.invoiceNumber, '112233');
       // must check the popupate of the address
-      assert.equal(mRec.contactName, 'contact name');
-      assert.equal(mRec.invoiceName, 'invoice name');
-      assert.equal(mRec.header, 'intro text');
-      assert.equal(mRec.event, 'event text');
-      assert.equal(mRec.footer, 'footer text');
-      assert.equal(mRec.vat, 19);
-      assert.equal(mRec.shippingCosts, 200);
-      assert.equal(mRec.otherCosts, 300);
-      assert.equal(mRec.productionCosts, 400);
+      assert.equal(obj.contactName, 'contact name');
+      assert.equal(obj.invoiceName, 'invoice name');
+      assert.equal(obj.header, 'intro text');
+      assert.equal(obj.event, 'event text');
+      assert.equal(obj.footer, 'footer text');
+      assert.equal(obj.vat, 19);
+      assert.equal(obj.shippingCosts, 200);
+      assert.equal(obj.otherCosts, 300);
+      assert.equal(obj.productionCosts, 400);
     })
   });
 

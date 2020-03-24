@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node index.js",
     "clear": "killall node",
-    "test": "node --expose-internals ./node_modules/.bin/mocha $(find test -name '*spec.js') --exit --recursive"
+    "test": "node --expose-internals ./node_modules/.bin/mocha $(find test -name '*spec.js') --exit --recursive",
+    "test-c": "node --expose-internals ./node_modules/.bin/mocha $(find test -name 'import.carrier.spec.js') --exit --recursive"
   },
   "author": "Jay Mc Anser",
   "license": "MIT",

@@ -1,5 +1,44 @@
 
+const Mongoose = require('../lib/db-mongo');
+const Schema = Mongoose.Schema;
+const _ = require('lodash');
+
+const FieldSchema = {
+  def: {  // the name in the FieldMap
+    type: String,
+    required: true
+  },
+  string: String,
+  boolean: Boolean,
+  number: Number,
+  date: Date,
+  related: {
+    type: Schema.Types.ObjectId,
+    // ref: 'Address'
+    refPath: '_fields.onModel'
+  },
+  onModel: {
+    type: String,
+    enum: ['Address', 'Distribution']
+  },
+};
+
+
 const FlexModel = {
+  /**
+   * create an basic FlexModel
+   * @param typeName String name registered in Mongoose
+   * @param data Object The list of {fieldName: value}
+   * @return Model unsaved model
+   */
+  create(typeName, data) {
+    let typeClass = Mongoose.Model(typeName);
+    let type = new typeClass({ _fields: []});
+    type.objectSet(data);
+    return type;
+  },
+
+
   objectSet: function(parent, FieldMap, data) {
     let fieldIndexs = {};
     if (parent._fields !== undefined) {
@@ -19,15 +58,17 @@ const FlexModel = {
     for (let key in data) {
       if (!data.hasOwnProperty(key)) { continue }
       if (fieldIndexs[key] === undefined && FieldMap.hasOwnProperty(key)) {
-        let obj = {def: key, [FieldMap[key].type]: data[key]};
-        if (FieldMap[key].model) {
-          obj.onModel = FieldMap[key].model;
+        if (data[key]) {
+          let obj = {def: key, [FieldMap[key].type]: data[key]};
+          if (FieldMap[key].model) {
+            obj.onModel = FieldMap[key].model;
+          }
+          parent._fields.push(obj);
         }
-        parent._fields.push(obj);
       } else if(FieldMap.hasOwnProperty(key)) {
         parent._fields[fieldIndexs[key]][FieldMap[key].type] = data[key]; // update the field
         //    parent._fields[fieldIndexs[key]].onModel = FieldMap[key].model;
-      } else { // put it on the base record
+      } else if (data[key] !== undefined) { // put it on the base record if not an empty value
         parent[key] = data[key];
         parent.markModified(key);
       }
@@ -59,7 +100,11 @@ const FlexModel = {
       for (let l = 0; l < parent._fields.length; l++) {
         // result[parent._fields[l].def] = parent._fields[l].text;
         let name = parent._fields[l].def;
-        result[name] = parent._fields[l][FieldMap[name].type];
+        if (FieldMap[name].model && parent._fields[l][FieldMap[name].type].objectGet !== undefined) {
+          result[name] = parent._fields[l][FieldMap[name].type].objectGet();
+        } else {
+          result[name] = parent._fields[l][FieldMap[name].type];
+        }
       }
       result = this._calcFields(FieldMap, result);
       for (let key in paths) {
@@ -86,3 +131,4 @@ const FlexModel = {
 };
 
 module.exports = FlexModel;
+module.exports.FieldSchema = FieldSchema;
