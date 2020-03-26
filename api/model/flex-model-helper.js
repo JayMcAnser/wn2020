@@ -42,6 +42,7 @@ const FlexModel = {
 
   objectSet: function(parent, FieldMap, data) {
     let fieldIndexs = {};
+
     if (parent._fields !== undefined) {
       for (let l = parent._fields.length - 1; l >= 0;  l--) {
         let name = parent._fields[l].def;
@@ -56,6 +57,7 @@ const FlexModel = {
     } else {
       parent._fields = [];
     }
+    // add the fysical fields
     for (let key in data) {
       if (!data.hasOwnProperty(key)) { continue }
       if (fieldIndexs[key] === undefined && FieldMap.hasOwnProperty(key)) {
@@ -139,6 +141,7 @@ const FlexModel = {
         result[fieldName] = fields[fieldName];
       }
     }
+    this._calcFields(FieldMap, result);
     return result;
    // let paths = record._doc;
 //

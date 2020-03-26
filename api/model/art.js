@@ -5,6 +5,7 @@
 const Mongoose = require('../lib/db-mongo');
 const Schema = Mongoose.Schema;
 const FlexModel = require('./flex-model-helper');
+const FieldSchema = require('./flex-model-helper').FieldSchema;
 const Address = require('./address');
 
 /**
@@ -47,48 +48,42 @@ const FieldMap = {
   // also: {type: 'related', model: 'Address', name: 'also', group: 'testing'},
 };
 
-
-const AddressLink = {
-  type: Schema.Types.ObjectId,
-  ref: 'Address'
-};
-const FieldSchema = {
-  def: {  // the name in the FieldMap
-    type: String,
-    required: true
-  },
-  string: String,
-  boolean: Boolean,
-  number: Number,
-  date: Date,
-  related: {
-    type: Schema.Types.ObjectId,
-    // ref: 'Address'
-    refPath: '_fields.onModel'
-  },
-  onModel: {
-    type: String,
-    enum: ['Address', 'Distribution']
-  },
-  address: AddressLink,
-};
-
-const AddressSchema = {
-  addr: { type: Schema.Types.ObjectId, ref: 'Address' },
-  number: Number,
-  name: String
-};
-// AddressSchema.path('addressId',).rec('User');
-
+//
+// const AddressLink = {
+//   type: Schema.Types.ObjectId,
+//   ref: 'Address'
+// };
+// // const FieldSchema = {
+// //   def: {  // the name in the FieldMap
+// //     type: String,
+// //     required: true
+// //   },
+// //   string: String,
+// //   boolean: Boolean,
+// //   number: Number,
+// //   date: Date,
+// //   related: {
+// //     type: Schema.Types.ObjectId,
+// //     // ref: 'Address'
+// //     refPath: '_fields.onModel'
+// //   },
+// //   onModel: {
+// //     type: String,
+// //     enum: ['Address', 'Distribution']
+// //   },
+// //   address: AddressLink,
+// // };
+//
+// const AddressSchema = {
+//   addr: { type: Schema.Types.ObjectId, ref: 'Address' },
+//   number: Number,
+//   name: String
+// };
+// // AddressSchema.path('addressId',).rec('User');
+//
 const ArtModelSchema = {
   artId: String,
   _fields: [FieldSchema],
-  // work: { type: Schema.Types.ObjectId,ref: 'Address'}
-  // work: AddressSchema,
-  // multi: [AddressSchema]
-  // address:[
-  //   AddressSchema
-  // ]
 };
 
 let ArtModel = new Schema(ArtModelSchema);
@@ -143,3 +138,4 @@ ArtModel.statics.findField = function(search = {}) {
 };
 
 module.exports = Mongoose.Model('Art', ArtModel);
+module.exports.FieldMap = FieldMap;

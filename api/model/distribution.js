@@ -4,13 +4,16 @@
  */
 const Mongoose = require('../lib/db-mongo');
 const Schema = Mongoose.Schema;
+const ErrorTypes = require('error-types');
 const FlexModel = require('./flex-model-helper');
 const FieldSchema = require('./flex-model-helper').FieldSchema;
+const ArtFieldMap = require('./art').FieldMap;
+const CarrierFieldMap = require('./carrier').FieldMap;
 /**
  * do NOT start a field with _. It will be skipped in the get
  * @type {{def: {type: StringConstructor, required: boolean}, text: StringConstructor}}
  */
-const FieldMap = {
+const DistributionFieldMap = {
   code: {type: 'string', name: 'code', group: 'general'},
   invoiceNumber: {type: 'string', name: 'invoice number', group: 'general'},
   contact: {type: 'related', model: 'Address', name: 'contact', group: 'general'},
@@ -30,29 +33,44 @@ const FieldMap = {
   shippingCosts: {type: 'number', name: 'shipping costs', group: 'general'},
   otherCosts: {type: 'number', name: 'other costs', group: 'general'},
   otherCostsText: {type: 'string', name: 'costs reason', group: 'general'},
+
+  // calculated
+  subTotal: {
+    type: 'number', name: 'sub total', group: 'finance', calc: (rec, mongoRec) => {
+      let result = 0;
+      if (rec.line && rec.line.length) {
+        for (let l = 0; l < rec.line.length; l++) {
+          if (rec.line[l].price) {
+            result += rec.line[l].price
+          }
+        }
+      }
+      return result;
+    }
+  },
 };
 
-const ItemSchema = {
-  item: {
-    type: Schema.Types.ObjectId,
-    refPath: 'itemType'
+const LineFieldMap = {
+  price: {type: 'number', name: 'price', group: 'general'},
+  quality: {type: 'string', name: 'quality', group: 'general'}
+};
+const ElementSchema = {
+  art: {
+    type: Schema.ObjectId,
+    ref: 'Art'
   },
-  itemType: {
-    type: String,
-    enum: ['Carrier', 'Art'],
-    required: true
+  carrier: {
+    type: Schema.ObjectId,
+    ref: 'Carrier'
   },
-  price: Number,
-  quality: {
-    type: String,
-    enum: ['min', 'low', 'medium', 'high', 'max']
-  }
+  _fields: [FieldSchema],
 };
 
 const DistributionSchema = {
   locationId: String,
   _fields: [FieldSchema],
-  items: [ItemSchema]
+  line: [ElementSchema],
+
 };
 
 let DistributionModel = new Schema(DistributionSchema);
@@ -67,12 +85,22 @@ DistributionModel.statics.create = function(fields) {
   return FlexModel.create('Distribution', fields)
 };
 
+
+DistributionModel.statics.relations = function() {
+  return {
+    '/' : DistributionFieldMap,
+    '/line': LineFieldMap,
+    '/line/art': ArtFieldMap,
+    '/line/carrier': CarrierFieldMap
+  }
+};
+
 /**
  * store an object in the field definition
  * @param data
  */
 DistributionModel.methods.objectSet = function(data) {
-  return FlexModel.objectSet(this, FieldMap, data);
+  return FlexModel.objectSet(this, DistributionFieldMap, data);
 };
 
 /**
@@ -82,7 +110,7 @@ DistributionModel.methods.objectSet = function(data) {
  * @return {{}}
  */
 DistributionModel.methods.objectGet = function(fieldNames = []) {
-  return FlexModel.objectGet(this, FieldMap, fieldNames);
+  return FlexModel.objectGet(this, DistributionFieldMap, fieldNames);
 };
 
 /**
@@ -94,11 +122,75 @@ DistributionModel.statics.findField = function(search = {}) {
   let qry = {};
   for (let key in search) {
     if (!search.hasOwnProperty(key)) { continue }
-    qry['_fields.' + FieldMap[key].type] = search[key];
+    qry['_fields.' + DistributionFieldMap[key].type] = search[key];
     qry['_fields.def'] = key;
   }
   let  f= this.find(qry);
   return this.find(qry);
 };
 
+/**
+ *
+ * @param itemData Art or Carrier or {art:, [field]: ...} or { carrier: , [fields]}
+ */
+DistributionModel.methods.lineAdd = function(itemData) {
+  let itm = {
+   // _fields: {}
+  };
+  if (itemData.art || itemData.carrier) {
+    if (itemData.art) {
+      itm.art = itemData.art
+    } else if (itemData.carrier) {
+      itm.carrier = itemData.carrier
+    }
+    FlexModel.objectSet(itm, LineFieldMap, itemData);
+  } else {
+    let model = itemData.constructor.modelName;
+    if (!model || ['Carrer', 'Art'].indexOf(model) < 0) {
+      throw new ErrorTypes.ErrorNotFound('unknown line type')
+    }
+    itm[model.toLowerCase()] = itemData._id;
+  }
+
+  this.line.push(itm);
+};
+
+DistributionModel.methods.lineUpdate = function(index, itemData) {
+  let ind = index;
+  if (typeof index !== 'number') {
+    for (ind = 0; ind < this.line.length; ind++) {
+      if (index.toString() === this.line[l].toString()) {
+        break;
+      }
+    }
+  }
+  if (ind < this.line.length) {
+    FlexModel.objectSet(this.line[ind], LineFieldMap, itemData);
+    this.markModified('line');
+  } else {
+    throw new ErrorTypes.ErrorNotFound('line not found');
+  }
+};
+
+DistributionModel.methods.lineRemove = function(index) {
+  let ind = index;
+  if (typeof index !== 'number') {
+    for (ind = 0; ind < this.line.length; ind++) {
+      if (index.toString() === this.line[l].toString()) {
+        break;
+      }
+    }
+  }
+  if (ind < this.line.length) {
+    this.line.splice(ind, 1);
+    this.markModified('line');
+  } else {
+    throw new ErrorTypes.ErrorNotFound('line not found');
+  }
+};
+DistributionModel.methods.lineCount = function() {
+  return this.line.length;
+};
 module.exports = Mongoose.Model('Distribution', DistributionModel);
+module.exports.FieldMap = DistributionFieldMap;
+module.exports.ElementSchema = ElementSchema;
