@@ -99,7 +99,7 @@ const FlexModel = {
     }
     let result = {};
     // fill the fields that are stored in the _fields definition
-    if (FieldMap) {
+    if (FieldMap && record._fields !== undefined) {
       for (let l = 0; l < record._fields.length; l++) {
         let name = record._fields[l].def;
         if (FieldMap[name].model && record._fields[l][FieldMap[name].type].objectGet !== undefined) {

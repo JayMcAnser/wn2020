@@ -6,6 +6,7 @@ const Db = require('./init.db').DbMongo;
 const chai = require('chai');
 const assert = chai.assert;
 const Test = require('../model/test');
+const Code = require('../model/code');
 
 describe('model.test', () => {
 
@@ -81,7 +82,39 @@ describe('model.test', () => {
     assert.equal(obj.flexArray[0].related.testId, 1);
     assert.equal(obj.flexArray[0].related.locationNumber, 'a0002');
    // console.log(obj)
-  })
+  });
 
+  it('has codes', async () => {
+    let c1 = await Code.findOne({guid: 'TEST_CODE_1'});
+    if (!c1) {
+      c1 = await Code.create({guid: 'TEST_CODE_1', text: 'test 1'})
+      await c1.save();
+      c1 = await Code.findOne({guid: 'TEST_CODE_1'});
+    }
+    let c2 = await Code.findOne({guid: 'TEST_CODE_2'});
+    if (!c2) {
+      c2 = await Code.create({guid: 'TEST_CODE_2', text: 'test 2'})
+      await c2.save();
+      c2 = await Code.findOne({guid: 'TEST_CODE_2'});
+    }
+    assert.equal(c1.text, 'test 1');
+    assert.equal(c2.text, 'test 2');
+    let test = Test.create({testId: 5, locationNumber: 'e0001', name: 'has codes'});
+    let rec = await test.save();
+    test.codeArray.push(c1);
+    test.codeArray.push(c2);
+    await test.save();
+    rec = await Test.findOne({testId: 5});
+    assert.equal(rec.codeArray.length, 2);
+    assert.equal(rec.codeArray[0].toString(), c1.id.toString())
+    rec = await Test.findOne({testId: 5})
+      .populate('codeArray');
+    assert.equal(rec.codeArray.length, 2);
+    assert.equal(rec.codeArray[0].text, c1.text);
+
+    let obj = rec.objectGet();
+    assert.equal(obj.codeArray.length, 2);
+    assert.equal(obj.codeArray[0].text, c1.text);
+  })
 
 });

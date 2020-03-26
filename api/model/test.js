@@ -40,6 +40,13 @@ const ExternFlexSchema = {
   },
   _fields: [FieldSchema]
 };
+
+const CodeSchema = {
+  code: {
+    type: Schema.Types.ObjectId,
+    ref: 'Code'
+  }
+};
 /**
  * carrier record
  */
@@ -56,6 +63,11 @@ const TestSchema = {
   baseSchema: ExternSchema,
   flexSchema: ExternFlexSchema,
   flexArray: [ExternFlexSchema],
+
+  codeArray: [{
+    type: Schema.ObjectId,
+    ref: 'Code'
+  }]
 };
 
 let TestModel = new Schema(TestSchema);
@@ -74,6 +86,7 @@ TestModel.statics.create = function(fields) {
 TestModel.statics.relations = function() {
   return {
     '/' : TestFieldMap,
+    '/codeArray': {},
     '/flexArray': ExternFlexMap,
     '/flexArray/related': TestFieldMap
   }
