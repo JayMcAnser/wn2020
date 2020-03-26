@@ -42,9 +42,9 @@ const FieldMap = {
   projection: {type: 'boolean', name: 'projection', group: 'presentation'},
   carriers: {type: 'string', name: 'carriers', group: 'presentation'},
   objects: {type: 'string', name: 'objects', group: 'presentation'},
-
-  owner: {type: 'address', name: 'owner', group: 'testing'},
-  also: {type: 'related', model: 'Address', name: 'also', group: 'testing'},
+  //
+  // owner: {type: 'address', name: 'owner', group: 'testing'},
+  // also: {type: 'related', model: 'Address', name: 'also', group: 'testing'},
 };
 
 
@@ -80,18 +80,18 @@ const AddressSchema = {
 };
 // AddressSchema.path('addressId',).rec('User');
 
-const ArtFlexSchema = {
+const ArtModelSchema = {
   artId: String,
   _fields: [FieldSchema],
   // work: { type: Schema.Types.ObjectId,ref: 'Address'}
-  work: AddressSchema,
-  multi: [AddressSchema]
+  // work: AddressSchema,
+  // multi: [AddressSchema]
   // address:[
   //   AddressSchema
   // ]
 };
 
-let ArtFlexModel = new Schema(ArtFlexSchema);
+let ArtModel = new Schema(ArtModelSchema);
 
 /**
  * create a new ArtFlex.
@@ -99,19 +99,20 @@ let ArtFlexModel = new Schema(ArtFlexSchema);
  * @param fields
  * @return {Promise|void|*}
  */
-ArtFlexModel.statics.create = function(fields) {
-  let ArtFlex = Mongoose.Model('ArtFlex');
-  let art = new ArtFlex({ _fields: []});
-  art.objectSet(fields);
-  return art.save();
+ArtModel.statics.create = function(fields) {
+  return FlexModel.create('Art', fields)
 };
 
 
+ArtModel.statics.relations = function() {
+  return {
+  }
+};
 /**
  * store an object in the field definition
  * @param data
  */
-ArtFlexModel.methods.objectSet = function(data) {
+ArtModel.methods.objectSet = function(data) {
   return FlexModel.objectSet(this, FieldMap, data);
 };
 
@@ -121,7 +122,7 @@ ArtFlexModel.methods.objectSet = function(data) {
  * @param fieldNames Array optional list of fields to store
  * @return {{}}
  */
-ArtFlexModel.methods.objectGet = function(fieldNames = []) {
+ArtModel.methods.objectGet = function(fieldNames = []) {
   return FlexModel.objectGet(this, FieldMap, fieldNames);
 };
 
@@ -130,7 +131,7 @@ ArtFlexModel.methods.objectGet = function(fieldNames = []) {
  * should become: {'_fields.string' : '1999', '_fields.def' : 'yearFrom'}
  */
 
-ArtFlexModel.statics.findField = function(search = {}) {
+ArtModel.statics.findField = function(search = {}) {
   let qry = {};
   for (let key in search) {
     if (!search.hasOwnProperty(key)) { continue }
@@ -141,4 +142,4 @@ ArtFlexModel.statics.findField = function(search = {}) {
   return this.find(qry);
 };
 
-module.exports = Mongoose.Model('ArtFlex', ArtFlexModel);
+module.exports = Mongoose.Model('Art', ArtModel);

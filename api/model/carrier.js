@@ -39,11 +39,45 @@ const FieldMap = {
   ltoPositionNumber: {type: 'string', name: 'lto position number', group: 'lto'},
   ltoMd5: {type: 'string', name: 'lto md5', group: 'lto'},
   viewRating: {type: 'number', name:'view rating', group: 'website'},
+
+  // new fields:
+  noArt: {type: 'boolean', name: 'no art', group: 'statistics'}
 };
 
+const ArtFieldMap = {
+  art: {type: 'related', model: 'Art', name: 'art', group: 'general'},
+  startTime: { type: 'string', name: 'start time', group:'general'},
+  endTime: {type: 'string', name: 'end time', group: 'general'},
+  source: {type: 'string', name: 'source', group: 'general'}
+};
+
+const ArtSchema = {
+  // art: {
+  //   type: Schema.Types.ObjectId,
+  //   ref: 'Art'
+  // },
+  extra: String,
+  _fields:[FieldSchema]
+};
+const ExternSchema = {
+  related:{
+    type: Schema.Types.ObjectId,
+    ref: 'Art'
+  },
+}
+/**
+ * carrier record
+ */
 const CarrierSchema = {
-  carrierId: String,
-  _fields: [FieldSchema],
+  carrierId: String,        // the org carrier id in WatsNext
+  _fields: [FieldSchema],   // the variable fields
+  artwork: [ArtSchema],     // the art in / on this carrier
+  // theArt: {
+  //   type: Schema.Types.ObjectId,
+  //   ref: 'Art'
+  // },
+  //theArt: FieldSchema,
+  theArt: ExternSchema
 };
 
 let CarrierModel = new Schema(CarrierSchema);
@@ -58,6 +92,12 @@ CarrierModel.statics.create = function(fields) {
   return FlexModel.create('Carrier', fields)
 };
 
+
+CarrierModel.statics.relations = function() {
+  return {
+    artwork2: ArtFieldMap,
+  }
+};
 /**
  * store an object in the field definition
  * @param data
@@ -92,5 +132,16 @@ CarrierModel.statics.findField = function(search = {}) {
   return this.find(qry);
 };
 
-module.exports = Mongoose.Model('Carrier', CarrierModel);
+CarrierModel.methods.artAdd = function(data) {
+  let dataRec = {_fields: []};
+  FlexModel.objectSet(dataRec, ArtFieldMap, data)
+  if (this.art === undefined) {
+    this.art = []
+  }
+  this.artwork.push(dataRec);
+};
 
+
+module.exports = Mongoose.Model('Carrier', CarrierModel);
+module.exports.FieldMap = FieldMap;
+module.exports.Art2CarrierMap = ArtFieldMap;

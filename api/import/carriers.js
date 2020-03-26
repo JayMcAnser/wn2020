@@ -84,6 +84,15 @@ class CarrierImport {
       dataRec[fieldName] = await recordValue(record, FieldMap[fieldName], Carrier);
     }
     try {
+
+      // now process the art on this carrier
+      let sql = `SELECT * FROM art2carrier WHERE carrier_ID=${record.carrier_ID}`;
+      let qry = await con.query(sql);
+      if (qry.length) {
+
+      } else {
+        dataRec['noArt'] = true;
+      }
       carrier.objectSet(dataRec);
       carrier = await carrier.save();
     } catch (e) {

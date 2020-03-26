@@ -19,6 +19,16 @@ const FieldSchema = {
   count: Number
 };
 
+const FieldMap = {
+  type: {type: 'string', name: 'code', group: 'general'},
+  searchCode: {type: 'string', name: 'search code', group: 'general'},
+  title: {type: 'string', name: 'title', group: 'general'},
+  titleEn: {type: 'string', name: 'title english', group: 'general'},
+  comments: {type: 'string', name: 'comments', group: 'general'},
+  sortOn: {type: 'string', name: 'sort on', group: 'general'},
+  isPartOfCollection: {type: 'boolean', name: 'is part of collection', group: 'general'},
+  yearFrom: {type: 'string', name: 'year from', group: 'general'},
+}
 
 const ArtSchema = {
   artId: String, // the id in watsnext
@@ -58,4 +68,7 @@ const ArtSchema = {
 let ArtModel = new Schema(ArtSchema);
 
 
+
+
 module.exports = Mongoose.Model('Art', ArtModel);
+module.exports.FieldMap = FieldMap;
