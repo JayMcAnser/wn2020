@@ -22,7 +22,7 @@ const FieldMap = {
   yearFrom: {type: 'string', name: 'yearFrom', group: 'general'},
   yearTill: {type: 'string', name: 'yearTill', group: 'general'},
   period: {
-    type: 'string', name: 'period', group: 'general', calc: (rec) => {
+    type: 'string', name: 'period', group: 'general', getValue: (rec) => {
       let s = `${rec.yearFrom ? rec.yearFrom : ''}${rec.yearFrom !== undefined && rec.yearTill !== undefined ? ' - ' : ''}${rec.yearTill ? rec.yearTill : ''}`
       return s.length ? s : undefined
     }

@@ -40,7 +40,7 @@ const DistributionFieldMap = {
   }},
   // calculated get
   subTotalCosts: {
-    type: 'number', name: 'sub total', group: 'finance', calc: (rec, mongoRec) => {
+    type: 'number', name: 'sub total', group: 'finance', getValue: (rec, mongoRec) => {
       let result = 0;
       if (rec.line && rec.line.length) {
         for (let l = 0; l < rec.line.length; l++) {
@@ -53,7 +53,7 @@ const DistributionFieldMap = {
     }
   },
   totalCosts: {
-    type: 'number', name: 'total costs', group: 'finance', calc: (rec, mongoRec) => {
+    type: 'number', name: 'total costs', group: 'finance', getValue: (rec, mongoRec) => {
       let result = rec.subTotalCosts;
       if (rec.productionCosts) {
         result += rec.productionCosts

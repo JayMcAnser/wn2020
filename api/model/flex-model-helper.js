@@ -92,8 +92,8 @@ const FlexModel = {
       if (!FieldMap.hasOwnProperty(key)) {
         continue
       }
-      if (FieldMap[key].calc) {
-        let d = FieldMap[key].calc(data, this);
+      if (FieldMap[key].getValue) {
+        let d = FieldMap[key].getValue(data, this);
         if (d !== undefined) {
           data[key] = d
         }
