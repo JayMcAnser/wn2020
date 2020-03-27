@@ -57,20 +57,27 @@ const FlexModel = {
     } else {
       parent._fields = [];
     }
-    // add the fysical fields
+
     for (let key in data) {
       if (!data.hasOwnProperty(key)) { continue }
-      if (fieldIndexs[key] === undefined && FieldMap.hasOwnProperty(key)) {
-        if (data[key]) {
-          let obj = {def: key, [FieldMap[key].type]: data[key]};
-          if (FieldMap[key].model) {
-            obj.onModel = FieldMap[key].model;
-          }
-          parent._fields.push(obj);
+
+      if (FieldMap.hasOwnProperty(key)) {
+        // check virtual fields
+        let value = data[key];
+        if (FieldMap[key].setValue) {
+          value = FieldMap[key].setValue(value, data, this)
         }
-      } else if(FieldMap.hasOwnProperty(key)) {
-        parent._fields[fieldIndexs[key]][FieldMap[key].type] = data[key]; // update the field
-        //    parent._fields[fieldIndexs[key]].onModel = FieldMap[key].model;
+        if (fieldIndexs[key] === undefined) {  // new field
+          if (value) {
+            let obj = {def: key, [FieldMap[key].type]: value};
+            if (FieldMap[key].model) {
+              obj.onModel = FieldMap[key].model;
+            }
+            parent._fields.push(obj);
+          }
+        } else { // update field
+          parent._fields[fieldIndexs[key]][FieldMap[key].type] = value; // update the field
+        }
       } else if (data[key] !== undefined) { // put it on the base record if not an empty value
         parent[key] = data[key];
         if (parent.markModified) {

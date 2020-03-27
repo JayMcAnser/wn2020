@@ -68,7 +68,7 @@ describe('model.test', () => {
     let test1 = await Test.findOne({testId: 1});
     let test = Test.create({testId: 4, locationNumber: 'd0001', name: 'related - flexArray'});
     let rec = await test.save();
-    rec.flexAdd({related: test1, title: 'base 2', name: 'Related name'})
+    rec.flexAdd({related: test1, title: 'base 2', name: 'Related name'});
     await test.save();
 
     rec = await Test.findOne({testId: 4})
@@ -87,13 +87,13 @@ describe('model.test', () => {
   it('has codes', async () => {
     let c1 = await Code.findOne({guid: 'TEST_CODE_1'});
     if (!c1) {
-      c1 = await Code.create({guid: 'TEST_CODE_1', text: 'test 1'})
+      c1 = await Code.create({guid: 'TEST_CODE_1', text: 'test 1'});
       await c1.save();
       c1 = await Code.findOne({guid: 'TEST_CODE_1'});
     }
     let c2 = await Code.findOne({guid: 'TEST_CODE_2'});
     if (!c2) {
-      c2 = await Code.create({guid: 'TEST_CODE_2', text: 'test 2'})
+      c2 = await Code.create({guid: 'TEST_CODE_2', text: 'test 2'});
       await c2.save();
       c2 = await Code.findOne({guid: 'TEST_CODE_2'});
     }
@@ -106,7 +106,7 @@ describe('model.test', () => {
     await test.save();
     rec = await Test.findOne({testId: 5});
     assert.equal(rec.codeArray.length, 2);
-    assert.equal(rec.codeArray[0].toString(), c1.id.toString())
+    assert.equal(rec.codeArray[0].toString(), c1.id.toString());
     rec = await Test.findOne({testId: 5})
       .populate('codeArray');
     assert.equal(rec.codeArray.length, 2);
@@ -115,6 +115,30 @@ describe('model.test', () => {
     let obj = rec.objectGet();
     assert.equal(obj.codeArray.length, 2);
     assert.equal(obj.codeArray[0].text, c1.text);
+  });
+
+  it('has calculated fields', async () => {
+    let rec = Test.create({testId: 6, type: 'calculating', locationNumber: 'f0001', name: 'virtuals'});
+    rec = await rec.save();
+    rec = await Test.findOne({testId: 6});
+    assert.equal(rec.testId, 6);
+    let obj = rec.objectGet();
+    assert.equal(obj.getValue, 'calculating is set');
+
+
+    rec.objectSet({name: 'virtuals 2', locationNumber: 'f00002'});
+    rec = await rec.save();
+    rec = await Test.findOne({testId: 6});
+    obj = rec.objectGet();
+    assert.equal(obj.name, 'virtuals 2');
+    assert.equal(obj.locationNumber, 'f00002');
+
+    // test the setValue
+    rec.objectSet({setValue: 'did it'});
+    rec = await rec.save();
+    rec = await Test.findOne({testId: 6});
+    obj = rec.objectGet();
+    assert.equal(obj.setValue, 'the value was did it')
   })
 
 });

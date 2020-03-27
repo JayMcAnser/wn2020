@@ -142,13 +142,19 @@ describe('model.distribution', () => {
       let obj = distr.objectGet();
       assert.equal(obj.line.length,1);
       assert.equal(obj.line[0].price, 100);
-      assert.equal(obj.subTotal, 100);
+      assert.equal(obj.subTotalCosts, 100);
 
       distr.lineAdd({art: art2, price: 200});
       await distr.save();
       obj = distr.objectGet();
       assert.equal(obj.line.length,2);
-      assert.equal(obj.subTotal, 300);
+      assert.equal(obj.subTotalCosts, 300);
+
+      distr.objectSet({productionCosts: 400});
+      await distr.save();
+      obj = distr.objectGet();
+      assert.equal(obj.totalCosts, 700);
+
     })
 
   })

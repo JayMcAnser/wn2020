@@ -14,6 +14,12 @@ const TestFieldMap = {
   type: {type: 'string', name: 'code', group: 'general'},
   locationNumber: {type: 'string', name: 'location number', group: 'general'},
   //relTest:{ type: related, model: 'Test', name: 'relation test', group: 'general'}
+  getValue: {type: 'string', name: 'getValue', group: 'calculated', calc: (rec, mongoRec) => {
+    return `${rec.type} is set`
+  }},
+  setValue: {type: 'string', name: 'setValue', group: 'calculated', setValue: (value, rec) => {
+    return `the value was ${value}`;
+  }}
 };
 
 /**
