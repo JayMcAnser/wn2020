@@ -46,7 +46,8 @@ const FlexModel = {
     if (parent._fields !== undefined) {
       for (let l = parent._fields.length - 1; l >= 0;  l--) {
         let name = parent._fields[l].def;
-        if (data[name] === undefined) {
+        let remove = FieldMap[name].setValue ? FieldMap[name].setValue(data[name], data) === undefined: false;
+        if (data[name] === undefined || remove) {
           if (data.hasOwnProperty(name) && FieldMap.hasOwnProperty(name)) {
             parent._fields.splice(l, 1);  // remove data not available but prop exist
           }
@@ -68,7 +69,7 @@ const FlexModel = {
           value = FieldMap[key].setValue(value, data, this)
         }
         if (fieldIndexs[key] === undefined) {  // new field
-          if (value) {
+          if (value !== undefined) {
             let obj = {def: key, [FieldMap[key].type]: value};
             if (FieldMap[key].model) {
               obj.onModel = FieldMap[key].model;

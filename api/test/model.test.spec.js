@@ -138,7 +138,21 @@ describe('model.test', () => {
     rec = await rec.save();
     rec = await Test.findOne({testId: 6});
     obj = rec.objectGet();
-    assert.equal(obj.setValue, 'the value was did it')
+    assert.equal(obj.setValue, 'the value was did it');
+
+    // test remove of calculated field
+    rec.objectSet({toggleRemove: 'waarde'});
+    rec = await rec.save();
+    rec = await Test.findOne({testId: 6});
+    obj = rec.objectGet();
+    assert.equal(obj.toggleRemove, 'waarde');
+
+    rec.objectSet({toggleRemove: false}); // false is just the function trigger
+    rec = await rec.save();
+    rec = await Test.findOne({testId: 6});
+    obj = rec.objectGet();
+    assert.isUndefined(obj.toggleRemove);
+
   })
 
 });

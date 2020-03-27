@@ -19,6 +19,12 @@ const TestFieldMap = {
   }},
   setValue: {type: 'string', name: 'setValue', group: 'calculated', setValue: (value, rec) => {
     return `the value was ${value}`;
+  }},
+  toggleRemove: {type: 'string', name: 'do remove', group: 'calculated', setValue: (value, rec) => {
+    if (value ) {
+      return value
+    }
+    return undefined
   }}
 };
 
