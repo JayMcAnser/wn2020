@@ -10,6 +10,10 @@ const Code = require('../model/code');
 
 describe('model.test', () => {
 
+  let c1;
+  let c2;
+  let c3;
+
   before( () => {
     return Test.deleteMany({})
   });
@@ -84,37 +88,58 @@ describe('model.test', () => {
    // console.log(obj)
   });
 
-  it('has codes', async () => {
-    let c1 = await Code.findOne({guid: 'TEST_CODE_1'});
-    if (!c1) {
-      c1 = await Code.create({guid: 'TEST_CODE_1', text: 'test 1'});
-      await c1.save();
-      c1 = await Code.findOne({guid: 'TEST_CODE_1'});
-    }
-    let c2 = await Code.findOne({guid: 'TEST_CODE_2'});
-    if (!c2) {
-      c2 = await Code.create({guid: 'TEST_CODE_2', text: 'test 2'});
-      await c2.save();
-      c2 = await Code.findOne({guid: 'TEST_CODE_2'});
-    }
-    assert.equal(c1.text, 'test 1');
-    assert.equal(c2.text, 'test 2');
-    let test = Test.create({testId: 5, locationNumber: 'e0001', name: 'has codes'});
-    let rec = await test.save();
-    test.codeArray.push(c1);
-    test.codeArray.push(c2);
-    await test.save();
-    rec = await Test.findOne({testId: 5});
-    assert.equal(rec.codeArray.length, 2);
-    assert.equal(rec.codeArray[0].toString(), c1.id.toString());
-    rec = await Test.findOne({testId: 5})
-      .populate('codeArray');
-    assert.equal(rec.codeArray.length, 2);
-    assert.equal(rec.codeArray[0].text, c1.text);
+  describe('has codes', async () => {
+    let rec;
+    let test;
+    let obj;
 
-    let obj = rec.objectGet();
-    assert.equal(obj.codeArray.length, 2);
-    assert.equal(obj.codeArray[0].text, c1.text);
+    before( async () => {
+      c1 = await Code.findOne({guid: 'TEST_CODE_1'});
+      if (!c1) {
+        c1 = await Code.create({guid: 'TEST_CODE_1', text: 'test 1'});
+        await c1.save();
+        c1 = await Code.findOne({guid: 'TEST_CODE_1'});
+      }
+      c2 = await Code.findOne({guid: 'TEST_CODE_2'});
+      if (!c2) {
+        c2 = await Code.create({guid: 'TEST_CODE_2', text: 'test 2'});
+        await c2.save();
+        c2 = await Code.findOne({guid: 'TEST_CODE_2'});
+      }
+      c3 = await Code.findOne({guid: 'TEST_CODE_3'});
+      if (!c3) {
+        c3 = await Code.create({guid: 'TEST_CODE_3', text: 'test 3'});
+        await c3.save();
+        c3 = await Code.findOne({guid: 'TEST_CODE_3'});
+      }
+    });
+    it('add codes', async() => {
+      assert.equal(c1.text, 'test 1');
+      assert.equal(c2.text, 'test 2');
+      test = Test.create({testId: 5, locationNumber: 'e0001', name: 'has codes'});
+      rec = await test.save();
+      test.codeArray.push(c1);
+      test.codeArray.push(c2);
+      await test.save();
+      rec = await Test.findOne({testId: 5});
+      assert.equal(rec.codeArray.length, 2);
+      assert.equal(rec.codeArray[0].toString(), c1.id.toString());
+      rec = await Test.findOne({testId: 5})
+        .populate('codeArray');
+      assert.equal(rec.codeArray.length, 2);
+      assert.equal(rec.codeArray[0].text, c1.text);
+      obj = rec.objectGet();
+      assert.equal(obj.codeArray.length, 2);
+      assert.equal(obj.codeArray[0].text, c1.text);
+    });
+    it('replace array', async() => {
+      rec.objectSet({codeArray: [c3]});
+      await rec.save();
+      rec = await Test.findOne({testId: 5})
+        .populate('codeArray');
+      assert.equal(rec.codeArray.length, 1);
+      assert.equal(rec.codeArray[0].guid, 'TEST_CODE_3');
+    })
   });
 
   it('has calculated fields', async () => {
@@ -152,7 +177,52 @@ describe('model.test', () => {
     rec = await Test.findOne({testId: 6});
     obj = rec.objectGet();
     assert.isUndefined(obj.toggleRemove);
+  });
 
+  describe('id field', () => {
+    let rec;
+    let obj;
+    let id;
+    it('has id', async() => {
+      rec = Test.create({testId: 7, type: 'calculating', locationNumber: 'g0001', name: 'id field'});
+      rec = await rec.save();
+      rec = await Test.findOne({testId: 7});
+      assert.equal(rec.testId, 7);
+      obj = rec.objectGet();
+      assert.isDefined(obj.id);
+      id = obj.id;
+    });
+
+    it('save including id', async () => {
+      obj.locationNumber = 'g0002';
+      obj.name = 'id field 2';
+      obj.id = '123456789012';
+      rec.objectSet(obj);
+      rec = await rec.save();
+      rec = await Test.findOne({testId: 7});
+      obj = rec.objectGet();
+      assert.equal(obj.name, 'id field 2');
+      assert.equal(obj.locationNumber, 'g0002');
+      assert.equal(obj.id, id, 'does not change the id')
+    });
+
+    it('array field with objects', async() => {
+      rec.flexAdd({title: 'the title', name: 'find id'});
+      rec = await rec.save();
+      rec = await Test.findOne({testId: 7});
+      obj = rec.objectGet();
+      assert.equal(obj.flexArray.length, 1);
+      assert.isDefined(obj.flexArray[0].id)
+    });
+
+    it('code array', async() => {
+      rec.codeArray.push(c1);
+      rec = await rec.save();
+      rec = await Test.findOne({testId: 7})
+        .populate('codeArray');
+      obj = rec.objectGet();
+      assert.equal(obj.codeArray.length, 1);
+      assert.isDefined(obj.codeArray[0].id)
+    })
   })
-
 });

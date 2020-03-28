@@ -108,6 +108,9 @@ const FlexModel = {
       options.rootType = record.constructor;
     }
     let result = {};
+    if (record._id) {
+      result.id = record._id.toString()
+    }
     // fill the fields that are stored in the _fields definition
     if (FieldMap && record._fields !== undefined) {
       for (let l = 0; l < record._fields.length; l++) {

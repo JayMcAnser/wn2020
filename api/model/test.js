@@ -139,7 +139,7 @@ TestModel.statics.findField = function(search = {}) {
 
 TestModel.methods.flexAdd = function(data) {
   let dataRec = {_fields: []};
-  FlexModel.objectSet(dataRec, ExternFlexMap, data)
+  FlexModel.objectSet(dataRec, ExternFlexMap, data);
 
   this.flexArray.push(dataRec);
 };
