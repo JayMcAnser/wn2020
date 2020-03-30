@@ -6,6 +6,7 @@
 const Group = require('../model/group');
 const User = require('../model/user');
 const Address = require('../model/address');
+const Carrier = require('../model/carrier');
 const Config = require('config');
 const Logging = require('./logging');
 
@@ -71,7 +72,21 @@ class Setup {
   async createAddress() {
     let addr = await Address.findOne({guid: 'DISTR_NOT_FOUND'});
     if (!addr) {
-      await Address.create({addressId: -1, guid: 'DISTR_NOT_FOUND', name: 'Distribution address not found'})
+      addr = await Address.create({addressId: -1, guid: 'DISTR_NOT_FOUND', name: 'Distribution address not found'})
+      await addr.save();
+    }
+    return true;
+  }
+
+  async createCarrier() {
+    let carrier = await Carrier.findField({locationNumber: 'CARRIER_NOT_FOUND'});
+    if (carrier.length === 0) {
+      carrier = await Carrier.create({carrierId: -1, locationNumber: 'CARRIER_NOT_FOUND', comments: 'Carrier not found by importer'})
+      await carrier.save()
+      let c = await Carrier.findField({locationNumber: 'CARRIER_NOT_FOUND'});
+      if (c.length === 0) {
+        throw new ErrorNotFound('could not find CARRIER_NOT_FOUND');
+      }
     }
     return true;
   }
@@ -86,6 +101,7 @@ class Setup {
     let grp = await this.createGroups();
     let usr = await this.createRootUsers(grp);
     let addr = await this.createAddress();
+    let carr = await this.createCarrier();
     return Promise.resolve(!!usr)
   }
 }

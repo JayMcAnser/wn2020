@@ -1,5 +1,5 @@
 /**
- * A flex carrier model where the field can be define on-the-fly
+ * A flex Test model where the field can be define on-the-fly
  *
  */
 const Mongoose = require('../lib/db-mongo');
@@ -147,4 +147,4 @@ TestModel.methods.flexAdd = function(data) {
 
 module.exports = Mongoose.Model('Test', TestModel);
 module.exports.FieldMap = TestFieldMap;
-//module.exports.Art2CarrierMap = ArtFieldMap;
+

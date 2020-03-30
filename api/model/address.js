@@ -11,6 +11,7 @@ const FieldSchema = require('./flex-model-helper').FieldSchema;
  * @type {{def: {type: StringConstructor, required: boolean}, text: StringConstructor}}
  */
 const FieldMap = {
+  guid: {type: 'string', name: 'guid', group: 'general'},
   department: {type: 'string', name: 'department', group: 'general'},
   subName: {type: 'string', name: 'sub name', group: 'general'},
   firstName: {type: 'string', name: 'first name', group: 'general'},

@@ -6,21 +6,31 @@ const Mongoose = require('../lib/db-mongo');
 const Schema = Mongoose.Schema;
 const ErrorTypes = require('error-types');
 const FlexModel = require('./flex-model-helper');
+const Logging = require('../lib/logging');
 const FieldSchema = require('./flex-model-helper').FieldSchema;
 const ArtFieldMap = require('./art').FieldMap;
 const CarrierFieldMap = require('./carrier').FieldMap;
+const _ = require('lodash');
 /**
  * do NOT start a field with _. It will be skipped in the get
  * @type {{def: {type: StringConstructor, required: boolean}, text: StringConstructor}}
  */
 const DistributionFieldMap = {
   code: {type: 'string', name: 'code', group: 'general'},
-  invoiceNumber: {type: 'string', name: 'invoice number', group: 'general'},
-  contact: {type: 'related', model: 'Address', name: 'contact', group: 'general'},
-  contactName: {type: 'string', name: 'contact name', group: 'general'},
-  invoice: {type: 'related', model: 'Address', name: 'invoice', group: 'general'},
-  invoiceName: {type: 'string', name: 'invoice name', group: 'general'},
-  mail: {type: 'related', model: 'Address', name: 'mail', group: 'general'},
+  invoiceNumber: {type: 'string', name: 'invoice number', group: 'contact'},
+  contact: {type: 'related', model: 'Address', name: 'contact', group: 'general', getValue: (rec, mongoRec) => {
+    if (rec.invoice === undefined) {
+      rec.invoice = _.cloneDeep(rec.contact);
+    }
+    if (rec.mail === undefined) {
+      rec.mail = _.cloneDeep(rec.contact)
+    }
+    return this.contact;
+  }},
+  contactName: {type: 'string', name: 'contact name', group: 'contact'},
+  invoice: {type: 'related', model: 'Address', name: 'invoice', group: 'contact'},
+  invoiceName: {type: 'string', name: 'invoice name', group: 'contact'},
+  mail: {type: 'related', model: 'Address', name: 'mail', group: 'contact'},
   insertion: {type: 'string', name: 'insertion', group: 'general'},
   event: {type: 'string', name: 'event', group: 'general'},
   header: {type: 'string', name: 'header', group: 'general'},
@@ -34,10 +44,6 @@ const DistributionFieldMap = {
   otherCosts: {type: 'number', name: 'other costs', group: 'general'},
   otherCostsText: {type: 'string', name: 'costs reason', group: 'general'},
 
-  // calculated set
-  address: {type: 'string', name: 'address', setValue: (value, rec, mongoRec) => {
-
-  }},
   // calculated get
   subTotalCosts: {
     type: 'number', name: 'sub total', group: 'finance', getValue: (rec, mongoRec) => {
@@ -70,10 +76,11 @@ const DistributionFieldMap = {
 };
 
 const LineFieldMap = {
-  price: {type: 'number', name: 'price', group: 'general'},
-  quality: {type: 'string', name: 'quality', group: 'general'}
+  order: {type: 'string', name: 'order', group: 'general'},     // the order of the lines
+  price: {type: 'number', name: 'price', group: 'general'},     // price in cents
+  quality: {type: 'string', name: 'quality', group: 'general'}  // requested quality if art is given
 };
-const ElementSchema = {
+const LineSchema = {
   art: {
     type: Schema.ObjectId,
     ref: 'Art'
@@ -88,8 +95,7 @@ const ElementSchema = {
 const DistributionSchema = {
   locationId: String,
   _fields: [FieldSchema],
-  line: [ElementSchema],
-
+  line: [LineSchema],
 };
 
 let DistributionModel = new Schema(DistributionSchema);
@@ -166,7 +172,8 @@ DistributionModel.methods.lineAdd = function(itemData) {
   } else {
     let model = itemData.constructor.modelName;
     if (!model || ['Carrer', 'Art'].indexOf(model) < 0) {
-      throw new ErrorTypes.ErrorNotFound('unknown line type')
+      Logging.warn('distribution: unknown line type');
+      return;
     }
     itm[model.toLowerCase()] = itemData._id;
   }
@@ -212,4 +219,4 @@ DistributionModel.methods.lineCount = function() {
 };
 module.exports = Mongoose.Model('Distribution', DistributionModel);
 module.exports.FieldMap = DistributionFieldMap;
-module.exports.ElementSchema = ElementSchema;
+module.exports.LineSchema = LineSchema;

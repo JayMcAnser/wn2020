@@ -115,10 +115,10 @@ describe('model.distribution', () => {
 
   describe('calculations', () => {
     let art1;
-    let art2
+    let art2;
     let distr;
 
-    before( async () => {
+    before(async () => {
       distr = Distribution.create({locationId: 2, code: '2000-0002'});
       art1 = await Art.findOne({artId: '201'});
       if (!art1) {
@@ -136,26 +136,50 @@ describe('model.distribution', () => {
       }
     });
 
-    it('add one line', async() => {
+    it('add one line', async () => {
       distr.lineAdd({art: art1, price: 100});
       await distr.save();
       let obj = distr.objectGet();
-      assert.equal(obj.line.length,1);
+      assert.equal(obj.line.length, 1);
       assert.equal(obj.line[0].price, 100);
       assert.equal(obj.subTotalCosts, 100);
 
       distr.lineAdd({art: art2, price: 200});
       await distr.save();
       obj = distr.objectGet();
-      assert.equal(obj.line.length,2);
+      assert.equal(obj.line.length, 2);
       assert.equal(obj.subTotalCosts, 300);
 
       distr.objectSet({productionCosts: 400});
       await distr.save();
       obj = distr.objectGet();
       assert.equal(obj.totalCosts, 700);
+    });
+  });
 
+  describe('multi set', () => {
+    let art1;
+    let distr;
+
+    before(async () => {
+      distr = Distribution.create({locationId: 3, code: '2000-0003'});
+      await distr.save();
+      distr = await Distribution.findOne({locationId: 3})
+      art1 = await Art.findOne({artId: '201'});
+      if (!art1) {
+        art1 = Art.create({artId: '201', title: 'dis.art 2'});
+        await art1.save();
+        // must do because if not stored releation won't work
+        art1 = await Art.find({artId: '201'});
+      }
+    });
+    it('set address', async () => {
+      distr.objectSet({contact: addr1});
+      await distr.save();
+      distr = await Distribution.findOne({locationId: 3});
+      obj = distr.objectGet();
+      assert.isDefined(obj.invoice);
+      assert.isDefined(obj.contact);
     })
-
   })
 });

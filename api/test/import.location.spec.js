@@ -10,6 +10,7 @@ const assert = chai.assert;
 const ImportLocation = require('../import/locations');
 const Distribution = require('../model/distribution');
 const Address = require('../model/address');
+const Carrier = require('../model/carrier');
 const Setup = require('../lib/setup');
 
 describe('import.location', () => {
@@ -18,10 +19,12 @@ describe('import.location', () => {
   before( () => {
     return Distribution.deleteMany({}).then( () => {
       return Address.deleteMany({}).then( () => {
-        return DbMySql.connect().then((con) => {
-          mySQL = con;
-          let setup = new Setup()
-          return setup.run();
+        return Carrier.deleteMany({}).then( () => {
+          return DbMySql.connect().then((con) => {
+            mySQL = con;
+            let setup = new Setup()
+            return setup.run();
+          })
         })
       })
     })
@@ -93,9 +96,9 @@ describe('import.location', () => {
   });
 
   it('run - clean', () => {
-    const limit = 10;
+    const limit = 1000;
     let imp = new ImportLocation({ limit: limit});
-    assert.isTrue(true);
+   // assert.isTrue(true);
     return imp.run(mySQL).then( (result) => {
       assert.equal(result.count, limit)
     })

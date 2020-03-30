@@ -20,7 +20,7 @@ const FieldMap = {
       case 21: return 'file';
       case 22: return 'lto';
       case 23: return 'image';
-      default: return `err-${rec[objectType_ID]}`;
+      default: return `err-${rec.objecttype_ID}`;
     }
   },
   locationNumber: 'location_number',
@@ -132,5 +132,7 @@ class CarrierImport {
   }
 }
 
+
 module.exports = CarrierImport;
 module.exports.FieldMap = FieldMap;
+

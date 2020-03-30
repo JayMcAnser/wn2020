@@ -14,9 +14,7 @@ const FieldSchema = {
   date: Date,
   related: {
     type: Schema.Types.ObjectId,
-    // ref: 'Address'
     refPath: '_fields.onModel'
-    //ref: 'Art'
   },
   onModel: {
     type: String,
@@ -154,29 +152,6 @@ const FlexModel = {
     }
     this._calcFields(FieldMap, result);
     return result;
-   // let paths = record._doc;
-//
-//     result = this._calcFields(FieldMap, result);
-//     for (let key in paths) {
-//       if (paths.hasOwnProperty(key) && key[0] !== '_') {
-//         if (typeof parent[key] === 'object') {  // it's an array so probably an embedded document
-//           // this is at the wrong place. We are looking at the array not at the element!!!!
-//           let Model = parent.constructor;
-//           let subFieldMap = Model.relations ? Model.relations()[key]  : undefined;
-//           if (subFieldMap && parent[key].length) {
-//             result[key] = [];
-//             for (let l = 0; l < parent[key].length; l++) {
-//               let d = this.objectGet( parent[key][l], subFieldMap);
-//               result[key].push(d);
-// //                 console.log(d)
-//             }
-//           }
-//         } else {
-//           result[key] = parent[key];
-//         }
-//       }
-//     }
-
   },
 
   objectGetOld: function(parent, FieldMap, fieldNames = []) {

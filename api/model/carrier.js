@@ -64,7 +64,7 @@ const ExternSchema = {
     type: Schema.Types.ObjectId,
     ref: 'Art'
   },
-}
+};
 /**
  * carrier record
  */
@@ -72,11 +72,8 @@ const CarrierSchema = {
   carrierId: String,        // the org carrier id in WatsNext
   _fields: [FieldSchema],   // the variable fields
   artwork: [ArtSchema],     // the art in / on this carrier
-  // theArt: {
-  //   type: Schema.Types.ObjectId,
-  //   ref: 'Art'
-  // },
-  //theArt: FieldSchema,
+
+
   theArt: ExternSchema
 };
 

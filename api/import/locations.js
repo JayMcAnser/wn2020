@@ -9,6 +9,7 @@ const Config = require('config');
 const Logging = require('../lib/logging');
 const Address = require('../model/address');
 const Carrier = require('../model/carrier');
+const ImportCarrier = require('../import/carriers');
 const recordValue = require('../import/import-helper').recordValue;
 const makeNumber = require('../import/import-helper').makeNumber;
 const AddrFieldMap = require('./addresses').FieldMap;
@@ -38,13 +39,14 @@ addressLink = async function(parent, addressId) {
       let myCon = await DbMySQL.connect();
       let myAddr = await myCon.query('SELECT * FROM addresses WHERE address_ID=?', [addressId]);
       if (myAddr.length === 0) {
-        addr = await parent.findOne({guid: 'DISTR_NOT_FOUND'});
-        if (!addr) {
+        addr = await Address.findField({guid: 'DISTR_NOT_FOUND'});
+        if (addr.length === 0) {
           Logging.error(`the address.guid DISTR_NOT_FOUND does not exist. Must run Setup`);
           return undefined;
         }
+        addr = addr[0];
       } else {
-        addr = await parent.create({addressId: addressId, isEmpty: false});
+        addr = await Address.create({addressId: addressId, isEmpty: false});
       }
       if (Config.get('Sync.pullAddress')) {
         if (myAddr.length) {
@@ -67,34 +69,30 @@ carrierLink = async function(parent, carrierId) {
       let myCon = await DbMySQL.connect();
       let myCarrier = await myCon.query('SELECT * FROM carrier WHERE carrier_ID=?', [carrierId]);
       if (myCarrier.length === 0) {
-        carrier = await parent.findOne({guid: 'DISTR_NOT_FOUND'});
-        if (!carrier) {
-          Logging.error(`the carrier.guid DISTR_NOT_FOUND does not exist. Must run Setup`);
+        carrier = await Carrier.findField({locationNumber: 'CARRIER_NOT_FOUND'});
+        if (carrier.length === 0) {
+          Logging.error(`the carrier.locationNumber == CARRIER_NOT_FOUND does not exist. Looking for id: ${carrierId}. Must run Setup`);
           return undefined;
         }
+        return carrier[0]._id.toString();
       } else {
-        carrier = await parent.create({carrierId: carrierId, isEmpty: false});
+        carrier = await Carrier.create({carrierId: carrierId, isEmpty: false});
       }
       if (Config.get('Sync.pullCarrier')) {
         if (myCarrier.length) {
-          let data = {};
-          for (let fieldName in CarrierFieldMap) {
-            if (!CarrierFieldMap.hasOwnProperty(fieldName)) { continue }
-            data[fieldName] = _recordValue(myCarrier[0], CarrierFieldMap[fieldName]);
-          }
-          carrier.objectSet(data);
-          carrier = await carrier.save();
+          let imp = new ImportCarrier();
+          await imp.runOnData(myCarrier[0]);
         }
       }
     }
-    return carrier;
+    return carrier._id.toString();
   }
   return undefined;
 };
 
 
 
-const fieldMap = {
+const ConvertMap = {
   locationId: 'location_ID',
   code: 'location_code',
   invoiceNumber: 'invoice_number',
@@ -117,7 +115,7 @@ const fieldMap = {
 
 const itemMap = {
   carrier: async (rec, mongoRec) => { return await carrierLink(mongoRec, rec.carrier_ID) },
-  sortOn: 'sort_on',
+  order: 'sort_on',
   price: (rec) => { return makeNumber(rec.price); },
 };
 
@@ -134,11 +132,11 @@ class LocationImport {
       dis = await Distribution.create({locationId: record.location_ID});
     }
     let dataRec = {};
-    for (let fieldName in fieldMap) {
-      if (!fieldMap.hasOwnProperty(fieldName)) {
+    for (let fieldName in ConvertMap) {
+      if (!ConvertMap.hasOwnProperty(fieldName)) {
         continue
       }
-      dataRec[fieldName] = await recordValue(record, fieldMap[fieldName], Distribution);
+      dataRec[fieldName] = await recordValue(record, ConvertMap[fieldName], Distribution);
     }
     try {
       dis.objectSet(dataRec);
@@ -150,15 +148,20 @@ class LocationImport {
       if (qry.length) {
         for (let recIndex = 0; recIndex < qry.length; recIndex++) {
           let rec = qry[recIndex];
-          dataRec = {};
+          let lineRec = {};
           for (let fieldName in itemMap) {
             if (!itemMap.hasOwnProperty(fieldName)) {
               continue
             }
-            dataRec[fieldName] = await recordValue(rec, itemMap[fieldName], Carrier);
+            let v = await recordValue(rec, itemMap[fieldName], Carrier);
+            if (v !== undefined) {
+              lineRec[fieldName] = v
+            }
           }
-          console.log(dataRec)
+          dis.lineAdd(lineRec)
+//          console.log(lineRec)
         }
+        dis  = await dis.save();
       }
 
     } catch (e) {
