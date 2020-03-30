@@ -122,6 +122,7 @@ class CarrierImport {
           process.stdout.write(`\r${x}`);
         }
       } while (qry.length > 0 && (this._limit === 0 || counter.count < this._limit));
+      process.stdout.write('\r');
       return resolve(counter)
     })
   }

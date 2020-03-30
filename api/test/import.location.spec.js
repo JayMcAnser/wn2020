@@ -13,7 +13,8 @@ const Address = require('../model/address');
 const Carrier = require('../model/carrier');
 const Setup = require('../lib/setup');
 
-describe('import.location', () => {
+describe('import.location', function() {
+  this.timeout(5000);
 
   let mySQL;
   before( () => {

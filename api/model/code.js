@@ -8,7 +8,7 @@ const Schema = DbMongo.Schema;
 
 
 const CodeSchema = {
-  orgCodeId: Number,  // the id in WatsNext
+  codeId: Number,  // the id in WatsNext
   guid: String,
   text: String,
   parent: {

@@ -53,13 +53,15 @@ const ArtRelationFieldMap = {
 };
 
 const ArtSchema = {
-  // art is stored in the fields
   art: {
     type: Schema.Types.ObjectId,
     ref: 'Art'
   },
-//  extra: String,
-  _fields:[FieldSchema]
+  _fields:[FieldSchema],
+  artCodes: [{
+    type: Schema.ObjectId,
+    ref: 'Code'
+  }]
 };
 
 /**
@@ -69,6 +71,10 @@ const CarrierSchema = {
   carrierId: String,        // the org carrier id in WatsNext
   _fields: [FieldSchema],   // the variable fields
   artwork: [ArtSchema],     // the art in / on this carrier
+  codes: [{
+      type: Schema.ObjectId,
+      ref: 'Code'
+  }]
 };
 
 let CarrierModel = new Schema(CarrierSchema);
@@ -86,8 +92,10 @@ CarrierModel.statics.create = function(fields) {
 
 CarrierModel.statics.relations = function() {
   return {
+    '/codes': {},
     '/artwork': ArtRelationFieldMap,
-    '/artwork/art': ArtFieldMap
+    '/artwork/art': ArtFieldMap,
+    '/artwork/artCodes': {}
   }
 };
 /**
@@ -127,9 +135,6 @@ CarrierModel.statics.findField = function(search = {}) {
 CarrierModel.methods.artAdd = function(data) {
   let dataRec = {_fields: []};
   FlexModel.objectSet(dataRec, ArtRelationFieldMap, data)
-  if (this.art === undefined) {
-    this.art = []
-  }
   this.artwork.push(dataRec);
 };
 
