@@ -164,9 +164,9 @@ DistributionModel.methods.lineAdd = function(itemData) {
   };
   if (itemData.art || itemData.carrier) {
     if (itemData.art) {
-      itm.art = itemData.art
+      itm.art = itemData.art._id === undefined ? itemData.art : itemData.art._id;
     } else if (itemData.carrier) {
-      itm.carrier = itemData.carrier
+      itm.carrier = itemData.carrier._id === undefined ? itemData.carrier : itemData.carrier._id;
     }
     FlexModel.objectSet(itm, LineFieldMap, itemData);
   } else {
@@ -177,7 +177,6 @@ DistributionModel.methods.lineAdd = function(itemData) {
     }
     itm[model.toLowerCase()] = itemData._id;
   }
-
   this.line.push(itm);
 };
 

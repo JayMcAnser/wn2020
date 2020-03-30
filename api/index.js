@@ -24,7 +24,7 @@ const start = async function() {
       headers: ['Accept', 'Content-Type', 'Authorization']
     }
   });
-  let db = new MongoDb();
+  // let db = MongoDb();
  // await db.connect();
   // server.decorate('request', 'getDb', function() {
   //   return db

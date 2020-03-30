@@ -14,6 +14,7 @@ const Address = require('./address');
  */
 const FieldMap = {
   type: {type: 'string', name: 'type', group: 'general'},
+  searchcode: {type: 'string', name: 'searchcode', group: 'general'},
   title: {type: 'string', name: 'title', group: 'general'},
   titleEn: {type: 'string', name: 'titleEn', group: 'general'},
   comments: {type: 'string', name: 'comments', group: 'general'},
@@ -29,6 +30,7 @@ const FieldMap = {
   },
 
   length: {type: 'string', name: 'length', group: 'general'},
+  descriptionNl: {type: 'string', name: 'description', group: 'general'},
   description: {type: 'string', name: 'description', group: 'general'},
   hasSound: {type: 'boolean', name: 'hasSound', group: 'general'},
   audio: {type: 'string', name: 'audio', group: 'general'},

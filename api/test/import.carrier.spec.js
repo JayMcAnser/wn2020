@@ -100,7 +100,7 @@ describe('import.carrier', function() {
   });
 
   it('run - clean', () => {
-    const limit = 1000;
+    const limit = 10;
     let imp = new ImportCarrier({ limit: limit});
     assert.isTrue(true);
     return imp.run(mySQL).then( (result) => {

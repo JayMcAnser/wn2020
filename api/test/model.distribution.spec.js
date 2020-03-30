@@ -60,7 +60,7 @@ describe('model.distribution', () => {
         art = Art.create({artId: '200', title: 'dis.art 1'});
         await art.save();
         // must do because if not stored releation won't work
-        art = await Art.find({artId: '200'});
+        art = await Art.findOne({artId: '200'});
       }
       assert.equal(art.artId, '200');
       // add the art to the distribution
@@ -126,6 +126,7 @@ describe('model.distribution', () => {
         await art1.save();
         // must do because if not stored releation won't work
         art1 = await Art.find({artId: '201'});
+        art1 = art1[0]
       }
       art2 = await Art.findOne({artId: '201'});
       if (!art2) {
@@ -133,6 +134,7 @@ describe('model.distribution', () => {
         await art2.save();
         // must do because if not stored releation won't work
         art2 = await Art.find({artId: '201'});
+        art2 = art2[0]
       }
     });
 
@@ -171,6 +173,7 @@ describe('model.distribution', () => {
         await art1.save();
         // must do because if not stored releation won't work
         art1 = await Art.find({artId: '201'});
+        art1 = art1[0];
       }
     });
     it('set address', async () => {

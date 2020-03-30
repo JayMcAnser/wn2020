@@ -8,14 +8,14 @@ const DbMySql = require('../lib/db-mysql');
 
 describe('db-mysql', async () => {
   it('create connection', () => {
-    let sql = new DbMySql();
+    let sql = DbMySql;
     return sql.connect().then( () => {
       assert.isTrue(true, 'did open')
     })
   });
 
   it('run query', () => {
-    let sql = new DbMySql();
+    let sql = DbMySql;
     return sql.connect().then( () => {
       return sql.query('SELECT * FROM art LIMIT 0, 1').then( (recs) => {
         assert.equal(recs.length, 1);
@@ -25,7 +25,7 @@ describe('db-mysql', async () => {
   });
 
   it('run stream', () => {
-    let sql = new DbMySql();
+    let sql = DbMySql;
     return sql.connect().then( (con) => {
       let art = con.queryStream('SELECT * FROM art LIMIT 0, 10');
       art.on('result', a => {

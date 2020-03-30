@@ -11,19 +11,19 @@ chai.use(chaiHttp);
 
 describe('api.user', async () => {
 
-  it('create', () => {
-    return chai.request(serverUrl)
-      .post('/user')
-      .send({
-        username: 'Jay',
-        email: 'jay@mcanser.com',
-        password: '1234'
-      })
-      .then((res) => {
-        assert.equal(res.status, 200);
-        assert.isDefined(res.body.message);
-        assert.include(res.body.message, 'watsnext');
-      });
-  });
+  // it('create', () => {
+  //   return chai.request(serverUrl)
+  //     .post('/user')
+  //     .send({
+  //       username: 'Jay',
+  //       email: 'jay@mcanser.com',
+  //       password: '1234'
+  //     })
+  //     .then((res) => {
+  //       assert.equal(res.status, 200);
+  //       assert.isDefined(res.body.message);
+  //       assert.include(res.body.message, 'watsnext');
+  //     });
+  // });
 });
 

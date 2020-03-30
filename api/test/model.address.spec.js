@@ -16,12 +16,12 @@ describe('model.address', () => {
     });
   });
 
-  describe('crud', () => {
-    it('create', () => {
-      return Address.link(3).then((addr) => {
-        assert.isDefined(addr.addressId);
-        assert.equal(addr.addressId, 3);
-      });
-    });
-  });
+  // describe('crud', () => {
+  //   it('create', () => {
+  //     return Address.link(3).then((addr) => {
+  //       assert.isDefined(addr.addressId);
+  //       assert.equal(addr.addressId, 3);
+  //     });
+  //   });
+  // });
 });

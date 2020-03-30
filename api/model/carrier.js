@@ -6,6 +6,7 @@ const Mongoose = require('../lib/db-mongo');
 const Schema = Mongoose.Schema;
 const FlexModel = require('./flex-model-helper');
 const FieldSchema = require('./flex-model-helper').FieldSchema;
+const ArtFieldMap = require('./art').FieldMap
 /**
  * do NOT start a field with _. It will be skipped in the get
  * @type {{def: {type: StringConstructor, required: boolean}, text: StringConstructor}}
@@ -44,27 +45,23 @@ const FieldMap = {
   noArt: {type: 'boolean', name: 'no art', group: 'statistics'}
 };
 
-const ArtFieldMap = {
-  art: {type: 'related', model: 'Art', name: 'art', group: 'general'},
+const ArtRelationFieldMap = {
+  // art: {type: 'related', model: 'Art', name: 'art', group: 'general'},
   startTime: { type: 'string', name: 'start time', group:'general'},
   endTime: {type: 'string', name: 'end time', group: 'general'},
   source: {type: 'string', name: 'source', group: 'general'}
 };
 
 const ArtSchema = {
-  // art: {
-  //   type: Schema.Types.ObjectId,
-  //   ref: 'Art'
-  // },
-  extra: String,
-  _fields:[FieldSchema]
-};
-const ExternSchema = {
-  related:{
+  // art is stored in the fields
+  art: {
     type: Schema.Types.ObjectId,
     ref: 'Art'
   },
+//  extra: String,
+  _fields:[FieldSchema]
 };
+
 /**
  * carrier record
  */
@@ -72,9 +69,6 @@ const CarrierSchema = {
   carrierId: String,        // the org carrier id in WatsNext
   _fields: [FieldSchema],   // the variable fields
   artwork: [ArtSchema],     // the art in / on this carrier
-
-
-  theArt: ExternSchema
 };
 
 let CarrierModel = new Schema(CarrierSchema);
@@ -92,7 +86,8 @@ CarrierModel.statics.create = function(fields) {
 
 CarrierModel.statics.relations = function() {
   return {
-    artwork2: ArtFieldMap,
+    '/artwork': ArtRelationFieldMap,
+    '/artwork/art': ArtFieldMap
   }
 };
 /**
@@ -131,7 +126,7 @@ CarrierModel.statics.findField = function(search = {}) {
 
 CarrierModel.methods.artAdd = function(data) {
   let dataRec = {_fields: []};
-  FlexModel.objectSet(dataRec, ArtFieldMap, data)
+  FlexModel.objectSet(dataRec, ArtRelationFieldMap, data)
   if (this.art === undefined) {
     this.art = []
   }

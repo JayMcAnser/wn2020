@@ -94,7 +94,8 @@ describe('import.art', () => {
       "internal_agent_ID": 3,
       "work_access_id": 0
     };
-    return imp.runOnData(record).then( (mRec) => {
+    return imp.runOnData(record).then( (rec) => {
+      let mRec = rec.objectGet();
       assert.equal(mRec.artId, 1);
       assert.equal(mRec.type, 'Video');
       assert.equal(mRec.searchcode, 'searchcode');
@@ -105,8 +106,8 @@ describe('import.art', () => {
       assert.equal(mRec.length, '01:02:03.00');
       assert.equal(mRec.yearFrom, 'from');
       assert.equal(mRec.yearTill, 'till');
-      assert.equal(mRec.description, 'description');
-      assert.equal(mRec.descriptionEn, 'descriptionEn');
+      assert.equal(mRec.descriptionNl, 'description');
+      assert.equal(mRec.description, 'descriptionEn');
       assert.equal(mRec.hasSound, 1);
       assert.equal(mRec.audio, 'audio');
       assert.equal(mRec.credits, 'credits')
