@@ -9,19 +9,18 @@ const Code = require('../model/code');
 
 describe('model.code', () => {
 
-  let user;
-  let grpId;
-
   before(() => {
     return Code.deleteMany({}).then(() => {
     })
   });
 
   it('create', async() => {
-    let c = Code.create({guid: 'CC_1', text: 'new code'});
+    let c = Code.create({codeId: 1, guid: 'CC_1', text: 'new code'});
     await c.save();
-    c = await Code.findOne({guid: 'CC_1'});
-    assert.isDefined(c);
-    assert.equal(c.text, 'new code');
-  })
+    c = await Code.findOne({codeId: 1});
+    let obj = c.objectGet();
+    assert.isDefined(obj);
+    assert.equal(obj.text, 'new code');
+  });
+
 });

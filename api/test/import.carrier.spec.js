@@ -1,5 +1,5 @@
 /**
- * Test the distribution model
+ * Test the carrier model
  */
 
 const Db = require('./init.db');
@@ -9,6 +9,7 @@ const chai = require('chai');
 const assert = chai.assert;
 const ImportCarrier = require('../import/carriers');
 const Carrier = require('../model/carrier');
+const Art = require('../model/art');
 const Setup = require('../lib/setup');
 
 describe('import.carrier', function() {
@@ -17,10 +18,12 @@ describe('import.carrier', function() {
   let mySQL;
   before(() => {
     return Carrier.deleteMany({}).then(() => {
-      return DbMySql.connect().then((con) => {
-        mySQL = con;
-        let setup = new Setup();
-        return setup.run();
+      return Art.deleteMany({}).then( () => {
+        return DbMySql.connect().then((con) => {
+          mySQL = con;
+          let setup = new Setup();
+          return setup.run();
+        })
       })
     })
   });
@@ -100,11 +103,22 @@ describe('import.carrier', function() {
   });
 
   it('run - clean', () => {
-    const limit = 10;
+    const limit = 2;
     let imp = new ImportCarrier({ limit: limit});
-    assert.isTrue(true);
     return imp.run(mySQL).then( (result) => {
       assert.equal(result.count, limit)
     })
+  })
+
+  it('import full record with art and sub codes', async () => {
+    const limit = 10;
+    let imp = new ImportCarrier({ limit: limit});
+    await imp.runOnData({carrier_ID: 2131});
+    let carrier = await Carrier.findOne({carrierId: 2131});
+    assert.isDefined(carrier);
+    assert.equal(carrier.carrierId, 2131)
+    let art = await Art.findOne({artId: 3223});
+    assert.isDefined(art);
+    assert.equal(art.artId, 3223)
   })
 });

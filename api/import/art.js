@@ -1,4 +1,5 @@
 
+const DbMySQL = require('../lib/db-mysql');
 const Art = require('../model/art');
 const Logging = require('../lib/logging');
 const recordValue = require('./import-helper').recordValue;
@@ -8,7 +9,7 @@ const insertField = require('./import-helper').insertField;
 // left: Mongo, right: Mysql
 
 
-const fieldMap = {
+const FieldMap = {
 
   artId: 'art_ID',
   code: 'searchcode',
@@ -21,7 +22,7 @@ const fieldMap = {
       case 5:
         return 'Channel';
       default:
-        return 'Unknown'
+        return `Unknown (${rec.objecttype_ID})`
     }
   },
   searchcode: 'searchcode',
@@ -114,26 +115,32 @@ class ArtImport {
    * @return {Promise<{}>}
    * @private
    */
-  async _convertRecord(record, options = {}) {
+  async _convertRecord(con, record, options = {}) {
     let art = await Art.findOne({artId: record.art_ID});
-    if (!art) {
-      art = {}
+    if (art) {
+      return art;
     }
-    for (let fieldName in fieldMap) {
-      if (!fieldMap.hasOwnProperty(fieldName)) {
+    art = Art.create(art);
+    if (options.loadSql) {
+      let sql = `SELECT * FROM art WHERE art_ID=${record.art_ID}`;
+      let qry = await con.query(sql);
+      if (qry.length === 0) {
+        Logging.warn(`art[${record.art_ID}] does not exist. skipped`);
+        return undefined
+      }
+      record = qry[0];
+    }
+    let dataRec = {};
+    for (let fieldName in FieldMap) {
+      if (!FieldMap.hasOwnProperty(fieldName)) {
         continue
       }
-      let d = await recordValue(record, fieldMap[fieldName], art);
-      if (d !== undefined) {
-        art[fieldName] = d
-      }
+      dataRec[fieldName] = await recordValue(record, FieldMap[fieldName], Art);
     }
     try {
-      if (art._id) {
-        art = await art.save();
-      } else {
-        art = await Art.create(art);
-      }
+      // should also import the codes and the agent
+      art.objectSet(dataRec);
+      art = await art.save();
     } catch (e) {
       Logging.error(`error importing art[${record.art_ID}]: ${e.message}`)
     }
@@ -162,8 +169,9 @@ class ArtImport {
     })
   }
 
-  async runOnData(record) {
-    return this._convertRecord(record);
+  async runOnData(record, options = {}) {
+    let con = DbMySQL.connection;
+    return this._convertRecord(con, record, options);
   }
 }
 module.exports = ArtImport;

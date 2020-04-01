@@ -49,7 +49,17 @@ const ArtRelationFieldMap = {
   // art: {type: 'related', model: 'Art', name: 'art', group: 'general'},
   startTime: { type: 'string', name: 'start time', group:'general'},
   endTime: {type: 'string', name: 'end time', group: 'general'},
-  source: {type: 'string', name: 'source', group: 'general'}
+  source: {type: 'string', name: 'source', group: 'general'},
+  collectionNumber: {type: 'string', name: 'collection number', group: 'general'},
+  locationNumber: {type: 'string', name: 'location number', group: 'general'},
+  videoCorrection: {type: 'string', name: 'video correction', group: 'general'},
+  audioCorrection: {type: 'string', name: 'audio correction', group: 'general'},
+  technicalComments: {type: 'string', name: 'technical comments', group: 'general'},
+  videoGain: {type: 'string', name: 'video gain', group: 'general'},
+  videoBlack: {type: 'string', name: 'video black', group: 'general'},
+  videoChroma: {type: 'string', name: 'video chroma', group: 'general'},
+  audioLeft: {type: 'string', name: 'audio left', group: 'general'},
+  audioRight: {type: 'string', name: 'saudio right', group: 'general'},
 };
 
 const ArtSchema = {
