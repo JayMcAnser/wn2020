@@ -108,7 +108,7 @@ describe('import.carrier', function() {
     return imp.run(mySQL).then( (result) => {
       assert.equal(result.count, limit)
     })
-  })
+  });
 
   it('import full record with art and sub codes', async () => {
     const limit = 10;

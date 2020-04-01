@@ -7,6 +7,7 @@ const Schema = Mongoose.Schema;
 const FlexModel = require('./flex-model-helper');
 const FieldSchema = require('./flex-model-helper').FieldSchema;
 const Address = require('./address');
+const CodeFieldMap = require('./code').ShortFieldMap;
 
 /**
  * do NOT start a field with _. It will be skipped in the get
@@ -50,42 +51,13 @@ const FieldMap = {
   // also: {type: 'related', model: 'Address', name: 'also', group: 'testing'},
 };
 
-//
-// const AddressLink = {
-//   type: Schema.Types.ObjectId,
-//   ref: 'Address'
-// };
-// // const FieldSchema = {
-// //   def: {  // the name in the FieldMap
-// //     type: String,
-// //     required: true
-// //   },
-// //   string: String,
-// //   boolean: Boolean,
-// //   number: Number,
-// //   date: Date,
-// //   related: {
-// //     type: Schema.Types.ObjectId,
-// //     // ref: 'Address'
-// //     refPath: '_fields.onModel'
-// //   },
-// //   onModel: {
-// //     type: String,
-// //     enum: ['Address', 'Distribution']
-// //   },
-// //   address: AddressLink,
-// // };
-//
-// const AddressSchema = {
-//   addr: { type: Schema.Types.ObjectId, ref: 'Address' },
-//   number: Number,
-//   name: String
-// };
-// // AddressSchema.path('addressId',).rec('User');
-//
 const ArtModelSchema = {
   artId: String,
   _fields: [FieldSchema],
+  codes: [{
+    type: Schema.ObjectId,
+    ref: 'Code'
+  }]
 };
 
 let ArtModel = new Schema(ArtModelSchema);
@@ -103,6 +75,7 @@ ArtModel.statics.create = function(fields) {
 
 ArtModel.statics.relations = function() {
   return {
+    '/codes': CodeFieldMap
   }
 };
 /**

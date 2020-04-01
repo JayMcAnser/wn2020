@@ -2,10 +2,12 @@
 const DbMySQL = require('../lib/db-mysql');
 const Art = require('../model/art');
 const Logging = require('../lib/logging');
+const CodeImport = require('../import/codes');
 const recordValue = require('./import-helper').recordValue;
 const makeNumber = require('./import-helper').makeNumber;
 const makeLength = require('./import-helper').makeLength;
 const insertField = require('./import-helper').insertField;
+const ImportHelper = require('./import-helper');
 // left: Mongo, right: Mysql
 
 
@@ -105,13 +107,15 @@ class ArtImport {
   constructor(options = {}) {
     this._limit = options.limit !== undefined ? options.limit : 0;
     this._step = 5;
+    this._codeImport = new CodeImport();
   }
 
   /**
    * internal converting a record
    *
    * @param record
-   * @param options
+   * @param options Object
+   *   - loadSql Boolean load the sql record if not found
    * @return {Promise<{}>}
    * @private
    */
@@ -120,10 +124,11 @@ class ArtImport {
     if (art) {
       return art;
     }
-    art = Art.create(art);
+    let sql;
+    let qry;
     if (options.loadSql) {
-      let sql = `SELECT * FROM art WHERE art_ID=${record.art_ID}`;
-      let qry = await con.query(sql);
+      sql = `SELECT * FROM art WHERE art_ID=${record.art_ID}`;
+      qry = await con.query(sql);
       if (qry.length === 0) {
         Logging.warn(`art[${record.art_ID}] does not exist. skipped`);
         return undefined
@@ -137,9 +142,22 @@ class ArtImport {
       }
       dataRec[fieldName] = await recordValue(record, FieldMap[fieldName], Art);
     }
+    //-- add the codes
+    sql = `SELECT * FROM art2code WHERE art_ID=${record.art_ID}`;
+    qry = await con.query(sql);
+    for (let codeIndex = 0; codeIndex < qry.length; codeIndex++) {
+      let code = await this._codeImport.runOnData(qry[codeIndex], {loadSql: true})
+      if (code) {
+        if (dataRec.codes === undefined) {
+          dataRec.codes = [code.id]
+        } else {
+          dataRec.codes.push(code.id)
+        }
+      }
+    }
     try {
       // should also import the codes and the agent
-      art.objectSet(dataRec);
+      art = Art.create(dataRec);
       art = await art.save();
     } catch (e) {
       Logging.error(`error importing art[${record.art_ID}]: ${e.message}`)
@@ -159,12 +177,13 @@ class ArtImport {
         qry = await con.query(sql);
         if (qry.length > 0) {
           for (let l = 0; l < qry.length; l++) {
-            this._convertRecord(qry[l]);
+            await this._convertRecord(con, qry[l]);
             counter.count++;
           }
-          start++;
+          ImportHelper.step(start++);
         }
       } while (qry.length > 0 && (this._limit === 0 || counter.count < this._limit));
+      ImportHelper.stepDone();
       return resolve(counter)
     })
   }

@@ -9,6 +9,7 @@ const CodeImport = require('./codes');
 const Logging = require('../lib/logging');
 const recordValue = require('../import/import-helper').recordValue;
 const makeNumber = require('../import/import-helper').makeNumber;
+const ImportHelper = require('./import-helper');
 
 
 
@@ -76,8 +77,9 @@ const ArtToCarrierFieldMap = {
 class CarrierImport {
 
   constructor(options= {}) {
+    const STEP = 5;
     this._limit = options.limit !== undefined ? options.limit : 0;
-    this._step = 5;
+    this._step = this._limit < STEP ? this._limit : STEP;
     this._artImport = new ArtImport();
     this._codeImport = new CodeImport();
   }
@@ -169,12 +171,10 @@ class CarrierImport {
             await this._convertRecord(con, qry[l]);
             counter.count++;
           }
-          start++;
-          let x = rotate[start % 4];
-          process.stdout.write(`\r${x}`);
+          ImportHelper.step(start++);
         }
       } while (qry.length > 0 && (this._limit === 0 || counter.count < this._limit));
-      process.stdout.write('\r');
+      ImportHelper.stepDone();
       return resolve(counter)
     })
   }

@@ -14,7 +14,7 @@ const Carrier = require('../model/carrier');
 const Setup = require('../lib/setup');
 
 describe('import.location', function() {
-  this.timeout(5000);
+  this.timeout(10000);
 
   let mySQL;
   before( () => {
@@ -23,7 +23,7 @@ describe('import.location', function() {
         return Carrier.deleteMany({}).then( () => {
           return DbMySql.connect().then((con) => {
             mySQL = con;
-            let setup = new Setup()
+            let setup = new Setup();
             return setup.run();
           })
         })

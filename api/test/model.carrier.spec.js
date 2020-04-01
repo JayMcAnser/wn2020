@@ -14,7 +14,9 @@ describe('model.carrier', function () {
 
   before( () => {
     return Carrier.deleteMany({}).then( () => {
-      return Art.deleteMany({})
+      return Art.deleteMany({}).then( () => {
+        return Code.deleteMany({})
+      })
     })
   });
 
@@ -52,7 +54,7 @@ describe('model.carrier', function () {
       let code = Code.create({codeId: 1, text:'carrier code'})
       code = await code.save();
       assert.isDefined(code.codeId);
-      carrier.codes.push(code);
+      carrier.codes.push(code.id);
       await carrier.save();
       carrier = await Carrier.findOne({carrierId : 3})
         .populate('codes');

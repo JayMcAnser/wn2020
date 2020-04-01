@@ -27,7 +27,7 @@ describe('import.code', function() {
   it('check field information', () => {
     let record =
       {
-        "code_ID": 1,
+        "code_ID": 9999999,
         "code_GUID": "guid",
         "group_ID": 2,
         "parent_ID": 3,
@@ -50,7 +50,7 @@ describe('import.code', function() {
     let imp = new ImportCode();
     return imp.runOnData(record).then( (mRec) => {
       let obj = mRec.objectGet();
-      assert.equal(obj.codeId, 1);
+      assert.equal(obj.codeId, 9999999);
       assert.equal(obj.guid, 'guid');
       assert.equal(obj.groupId, 2);
       assert.equal(obj.parentId, 3);
@@ -70,4 +70,12 @@ describe('import.code', function() {
       assert.equal(obj.notUsed, 1)
     });
   });
+
+  it('run - clean', () => {
+    const limit = 10;
+    let imp = new ImportCode({ limit: limit});
+    return imp.run(mySQL).then( (result) => {
+      assert.equal(result.count, limit)
+    })
+  })
 });

@@ -80,7 +80,17 @@ function insertField(text, label, group, mongoRec, fieldName) {
   return undefined;
 }
 
+function step(count) {
+  let rotate = ['|','/','-','\\'];
+  process.stdout.write(`\r${rotate[count % 4]}`);
+}
+function stepDone() {
+  process.stdout.write('\r');
+}
+
 module.exports.recordValue = recordValue;
 module.exports.makeNumber = makeNumber;
 module.exports.makeLength = makeLength;
 module.exports.insertField = insertField;
+module.exports.step = step;
+module.exports.stepDone = stepDone;

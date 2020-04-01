@@ -7,7 +7,7 @@ const Code = require('../model/code');
 const Logging = require('../lib/logging');
 const recordValue = require('../import/import-helper').recordValue;
 const makeNumber = require('../import/import-helper').makeNumber;
-
+const ImportHelper = require('./import-helper');
 
 
 const FieldMap = {
@@ -30,11 +30,13 @@ const FieldMap = {
   sortOnNl: 'sort_on_nl',
   notUsed: 'not_used',
 };
+
 class CodeImport {
 
   constructor(options= {}) {
+    const STEP = 5;
     this._limit = options.limit !== undefined ? options.limit : 0;
-    this._step = 5;
+    this._step = this._limit < STEP ? this._limit : STEP;
   }
 
   /**
@@ -48,10 +50,21 @@ class CodeImport {
    */
   async _convertRecord(con, record, options = {}) {
     let code = await Code.findOne({codeId: record.code_ID});
-    if (!code) {
-      code = await Code.create({codeId: record.code_ID});
+    if (code) {
+      return code;
     }
-    let dataRec = {};
+    let sql;
+    let qry;
+    if (options.loadSql) {
+      sql = `SELECT * FROM codes WHERE code_ID=${record.code_ID}`;
+      qry = await con.query(sql);
+      if (qry.length === 0) {
+        Logging.warn(`code[${record.art_ID}] does not exist. skipped`);
+        return undefined
+      }
+      record = qry[0];
+    }
+    let dataRec = {codeId: record.code_ID};
     for (let fieldName in FieldMap) {
       if (!FieldMap.hasOwnProperty(fieldName)) {
         continue
@@ -59,7 +72,7 @@ class CodeImport {
       dataRec[fieldName] = await recordValue(record, FieldMap[fieldName], Code);
     }
     try {
-      code.objectSet(dataRec);
+      code = Code.create(dataRec);
       code = await code.save();
     } catch (e) {
       Logging.error(`error importing code[${record.code_ID}]: ${e.message}`)
@@ -68,7 +81,6 @@ class CodeImport {
   }
 
   async run(con) {
-    let rotate = ['|','/','-','\\'];
     let vm = this;
     return new Promise(async (resolve, reject) => {
       let start = 0;
@@ -76,26 +88,31 @@ class CodeImport {
       let qry = [];
       do {
         let dis;
-        let sql = `SELECT * FROM code ORDER BY code_ID LIMIT ${start * vm._step}, ${vm._step}`;
+        let sql = `SELECT * FROM codes ORDER BY code_ID LIMIT ${start * vm._step}, ${vm._step}`;
         qry = await con.query(sql);
         if (qry.length > 0) {
           for (let l = 0; l < qry.length; l++) {
             await this._convertRecord(con, qry[l]);
             counter.count++;
           }
-          start++;
-          let x = rotate[start % 4];
-          process.stdout.write(`\r${x}`);
+          ImportHelper.step(start++);
         }
       } while (qry.length > 0 && (this._limit === 0 || counter.count < this._limit));
-      process.stdout.write('\r');
+      ImportHelper.stepDone();
       return resolve(counter)
     })
   }
 
-  async runOnData(record) {
+  /**
+   *
+   * @param record Object containing code_ID
+   * @param options Object
+   *      - loadSql Boolean if true the sql record is loaded from disk
+   * @return {Promise<*>}
+   */
+  async runOnData(record, options = {}) {
     let con = DbMySQL.connection;
-    return await this._convertRecord(con, record);
+    return await this._convertRecord(con, record, options);
   }
 }
 

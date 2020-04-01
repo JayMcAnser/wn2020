@@ -2,6 +2,7 @@
 const Mongoose = require('../lib/db-mongo');
 const Schema = Mongoose.Schema;
 const _ = require('lodash');
+const Logging = require('../lib/logging');
 
 const FieldSchema = {
   def: {  // the name in the FieldMap
@@ -113,14 +114,16 @@ const FlexModel = {
     if (FieldMap && record._fields !== undefined) {
       for (let l = 0; l < record._fields.length; l++) {
         let name = record._fields[l].def;
-        if (FieldMap[name].model && record._fields[l][FieldMap[name].type].objectGet !== undefined) {
+        if (FieldMap[name] && FieldMap[name].model && record._fields[l][FieldMap[name].type].objectGet !== undefined) {
           // the _field related, so the field will become an object
           // WHY: no record and FieldMap???
           result[name] = record._fields[l][FieldMap[name].type].objectGet();
-        } else {
+        } else if (FieldMap[name]) {
           // the plain value
           result[name] = record._fields[l][FieldMap[name].type];
-        }
+        } else if (Object.keys(FieldMap).length === 0) {
+          Logging.warn(`FieldMap is empty. probably missing relations. field: ${name}`)
+        } // else skip this field
       }
     }
     let fields = record.toObject ? record.toObject() : record;

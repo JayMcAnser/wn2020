@@ -11,7 +11,8 @@ const ImportArt = require('../import/art');
 const Art = require('../model/art');
 const Setup = require('../lib/setup');
 
-describe('import.art', () => {
+describe('import.art', function() {
+  this.timeout(5000);
 
   let mySQL;
   before( () => {

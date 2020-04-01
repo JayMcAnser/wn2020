@@ -7,7 +7,7 @@ const DbMongo = require('../lib/db-mongo');
 const Schema = DbMongo.Schema;
 const FlexSchema = require('./flex-model-helper').FieldSchema;
 const FlexModel = require('./flex-model-helper');
-
+const _ = require('lodash');
 
 
 const FieldMap = {
@@ -29,6 +29,10 @@ const FieldMap = {
   sortOnNl: {type: 'string', name: 'sort on nl', group: 'general'},
   notUsed: {type: 'boolean', name: 'not used', group: 'general'},
 };
+
+const ShortFieldMap = _.pick(FieldMap, ['text', 'parentId', 'short', 'sortOn']);
+
+;
 
 const CodeSchema = {
   codeId: Number,  // the id in WatsNext
@@ -71,3 +75,4 @@ CodeModel.methods.objectGet = function(fieldNames = []) {
 
 module.exports = DbMongo.Model('Code', CodeModel);
 module.exports.FieldMap = FieldMap;
+module.exports.ShortFieldMap = ShortFieldMap;

@@ -6,6 +6,7 @@ const Mongoose = require('../lib/db-mongo');
 const Schema = Mongoose.Schema;
 const FlexModel = require('./flex-model-helper');
 const FieldSchema = require('./flex-model-helper').FieldSchema;
+const CodeFieldMap = require('./code').ShortFieldMap;
 
 /**
  * the fields of the main record
@@ -98,7 +99,7 @@ TestModel.statics.create = function(fields) {
 TestModel.statics.relations = function() {
   return {
     '/' : TestFieldMap,
-    '/codeArray': {},
+    '/codeArray': CodeFieldMap,
     '/flexArray': ExternFlexMap,
     '/flexArray/related': TestFieldMap
   }

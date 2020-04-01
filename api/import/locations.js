@@ -14,7 +14,8 @@ const recordValue = require('../import/import-helper').recordValue;
 const makeNumber = require('../import/import-helper').makeNumber;
 const AddrFieldMap = require('./addresses').FieldMap;
 const CarrierFieldMap = require('./carriers').FieldMap;
-// left: Mongo, right: Mysql
+const ImportHelper = require('./import-helper');
+
 
 _recordValue = function(rec, part) {
   let result;
@@ -185,9 +186,10 @@ class LocationImport {
             await this._convertRecord(con, qry[l]);
             counter.count++;
           }
-          start++;
+          ImportHelper.step(start++);
         }
       } while (qry.length > 0 && (this._limit === 0 || counter.count < this._limit));
+      ImportHelper.stepDone();
       return resolve(counter)
     })
   }

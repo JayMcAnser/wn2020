@@ -6,7 +6,8 @@ const Mongoose = require('../lib/db-mongo');
 const Schema = Mongoose.Schema;
 const FlexModel = require('./flex-model-helper');
 const FieldSchema = require('./flex-model-helper').FieldSchema;
-const ArtFieldMap = require('./art').FieldMap
+const ArtFieldMap = require('./art').FieldMap;
+const CodeFieldMap = require('./code').ShortFieldMap;
 /**
  * do NOT start a field with _. It will be skipped in the get
  * @type {{def: {type: StringConstructor, required: boolean}, text: StringConstructor}}
@@ -102,10 +103,10 @@ CarrierModel.statics.create = function(fields) {
 
 CarrierModel.statics.relations = function() {
   return {
-    '/codes': {},
+    '/codes': CodeFieldMap,
     '/artwork': ArtRelationFieldMap,
     '/artwork/art': ArtFieldMap,
-    '/artwork/artCodes': {}
+    '/artwork/artCodes': CodeFieldMap
   }
 };
 /**
