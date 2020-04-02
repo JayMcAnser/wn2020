@@ -5,7 +5,7 @@
  */
 const Group = require('../model/group');
 const User = require('../model/user');
-const Address = require('../model/address');
+const Contact = require('../model/contact');
 const Carrier = require('../model/carrier');
 const Config = require('config');
 const Logging = require('./logging');
@@ -69,11 +69,11 @@ class Setup {
     return true;
   }
 
-  async createAddress() {
-    let addr = await Address.findOne({guid: 'DISTR_NOT_FOUND'});
-    if (!addr) {
-      addr = await Address.create({addressId: -1, guid: 'DISTR_NOT_FOUND', name: 'Distribution address not found'})
-      await addr.save();
+  async createContact() {
+    let contact = await Contact.findOne({guid: 'DISTR_NOT_FOUND'});
+    if (!contact) {
+      contact = await Contact.create({addressId: -1, guid: 'DISTR_NOT_FOUND', name: 'Distribution contact not found'})
+      await contact.save();
     }
     return true;
   }
@@ -100,7 +100,7 @@ class Setup {
     }
     let grp = await this.createGroups();
     let usr = await this.createRootUsers(grp);
-    let addr = await this.createAddress();
+    let addr = await this.createContact();
     let carr = await this.createCarrier();
     return Promise.resolve(!!usr)
   }

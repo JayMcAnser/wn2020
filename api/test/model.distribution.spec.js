@@ -6,34 +6,34 @@ const Db = require('./init.db').DbMongo;
 const chai = require('chai');
 const assert = chai.assert;
 const Distribution = require('../model/distribution');
-const Address = require('../model/address');
+const Contact = require('../model/contact');
 const Art = require('../model/art');
 
 
 describe('model.distribution', () => {
 
-  let addr1;
+  let contact1;
   let objAddr;
   let dist;
   let art;
 
   before( () => {
     return Distribution.deleteMany({}).then( async () => {
-      addr1 = await Address.findOne({addressId: 1});
-      if (!addr1) {
-        addr1 = Address.create({addressId: 1, name: 'test 1'});
-        await addr1.save();
-        addr1 = await Address.findOne({addressId: 1});
+      contact1 = await Contact.findOne({addressId: 1});
+      if (!contact1) {
+        contact1 = Contact.create({addressId: 1, name: 'test 1'});
+        await contact1.save();
+        contact1 = await Contact.findOne({addressId: 1});
       }
-      objAddr = addr1.objectGet();
+      objAddr = contact1.objectGet();
     })
   });
 
   describe('crud', () => {
     it('create', async() => {
       distr = Distribution.create({locationId: 1, code: '2000-0001'});
-      assert.equal(addr1.name, addr1.name);
-      distr.objectSet({contact: addr1});
+      assert.equal(contact1.name, contact1.name);
+      distr.objectSet({contact: contact1});
       await distr.save();
 
       distr = await Distribution.findOne({locationId: 1});
@@ -45,7 +45,7 @@ describe('model.distribution', () => {
       distr = await Distribution.findOne({locationId: 1});
       obj = distr.objectGet();
       assert.equal(obj.code, '2000-0001');
-      assert.equal(obj.contact.toString(), addr1.id.toString());
+      assert.equal(obj.contact.toString(), contact1.id.toString());
 
       distr = await Distribution.findOne({locationId: 1})
         .populate('_fields.related');
@@ -177,7 +177,7 @@ describe('model.distribution', () => {
       }
     });
     it('set address', async () => {
-      distr.objectSet({contact: addr1});
+      distr.objectSet({contact: contact1});
       await distr.save();
       distr = await Distribution.findOne({locationId: 3});
       obj = distr.objectGet();

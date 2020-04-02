@@ -1,5 +1,5 @@
 /**
- * A flexable art model where the field can be define on-the-fly
+ * A flexable contact model where the field can be define on-the-fly
  *
  */
 const Mongoose = require('../lib/db-mongo');
@@ -27,15 +27,15 @@ const DistributionContractSchema = {
   contract: {type: Schema.Types.ObjectId, def: 'Distribution'},
   info: String,
 };
-const AddressSchema = {
+const ContactSchema = {
   addressId: String,
   _fields: [FieldSchema],
   contracts: [DistributionContractSchema]
 };
 
-let AddressModel = new Schema(AddressSchema);
+let ContactModel = new Schema(ContactSchema);
 
-// AddressModel.pre('findOne', function(error, doc, next) {
+// ContactModel.pre('findOne', function(error, doc, next) {
 // //  console.log('addr.found', this._conditions)
 //   // next();
 // })
@@ -45,15 +45,15 @@ let AddressModel = new Schema(AddressSchema);
  * @param fields
  * @return {Promise|void|*}
  */
-AddressModel.statics.create = function(fields) {
-  return FlexModel.create('Address', fields)
+ContactModel.statics.create = function(fields) {
+  return FlexModel.create('Contact', fields)
 };
 
 /**
  * store an object in the field definition
  * @param data
  */
-AddressModel.methods.objectSet = function(data) {
+ContactModel.methods.objectSet = function(data) {
   return FlexModel.objectSet(this, FieldMap, data);
 };
 
@@ -63,7 +63,7 @@ AddressModel.methods.objectSet = function(data) {
  * @param fieldNames Array optional list of fields to store
  * @return {{}}
  */
-AddressModel.methods.objectGet = function(fieldNames = []) {
+ContactModel.methods.objectGet = function(fieldNames = []) {
   return FlexModel.objectGet(this, FieldMap, fieldNames);
 };
 
@@ -72,7 +72,7 @@ AddressModel.methods.objectGet = function(fieldNames = []) {
  * should become: {'_fields.string' : '1999', '_fields.def' : 'yearFrom'}
  */
 
-AddressModel.statics.findField = function(search = {}) {
+ContactModel.statics.findField = function(search = {}) {
   let qry = {};
   for (let key in search) {
     if (!search.hasOwnProperty(key)) { continue }
@@ -83,5 +83,5 @@ AddressModel.statics.findField = function(search = {}) {
   return this.find(qry);
 };
 
-module.exports = Mongoose.Model('Address', AddressModel);
+module.exports = Mongoose.Model('Contact', ContactModel);
 

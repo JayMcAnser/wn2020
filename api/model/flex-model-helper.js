@@ -19,7 +19,7 @@ const FieldSchema = {
   },
   onModel: {
     type: String,
-    enum: ['Address', 'Art', 'Carrier', 'Agent', 'Distribution', 'Test']
+    enum: ['Contact', 'Art', 'Carrier', 'Agent', 'Distribution', 'Test']
   },
 };
 

@@ -6,7 +6,7 @@ const Mongoose = require('../lib/db-mongo');
 const Schema = Mongoose.Schema;
 const FlexModel = require('./flex-model-helper');
 const FieldSchema = require('./flex-model-helper').FieldSchema;
-const Address = require('./address');
+const Contact = require('./contact');
 const CodeFieldMap = require('./code').ShortFieldMap;
 
 /**
@@ -48,7 +48,7 @@ const FieldMap = {
   objects: {type: 'string', name: 'objects', group: 'presentation'},
   //
   // owner: {type: 'address', name: 'owner', group: 'testing'},
-  // also: {type: 'related', model: 'Address', name: 'also', group: 'testing'},
+  // also: {type: 'related', model: 'Contact', name: 'also', group: 'testing'},
 };
 
 const ArtModelSchema = {

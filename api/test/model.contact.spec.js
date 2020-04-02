@@ -1,16 +1,16 @@
 /**
- * Test the group model
+ * Test the Contact model
  */
 
 const Db = require('./init.db').DbMongo;
 const chai = require('chai');
 const assert = chai.assert;
-const Address = require('../model/address');
+const Contact = require('../model/contact');
 const Setup = require('../lib/setup');
 
 describe('model.address', () => {
   before( () => {
-    return Address.deleteMany({}).then(() => {
+    return Contact.deleteMany({}).then(() => {
       let setup = new Setup();
       return setup.run();
     });

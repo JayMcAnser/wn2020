@@ -9,7 +9,7 @@ const chai = require('chai');
 const assert = chai.assert;
 const ImportLocation = require('../import/locations');
 const Distribution = require('../model/distribution');
-const Address = require('../model/address');
+const Contact = require('../model/contact');
 const Carrier = require('../model/carrier');
 const Setup = require('../lib/setup');
 
@@ -19,7 +19,7 @@ describe('import.location', function() {
   let mySQL;
   before( () => {
     return Distribution.deleteMany({}).then( () => {
-      return Address.deleteMany({}).then( () => {
+      return Contact.deleteMany({}).then( () => {
         return Carrier.deleteMany({}).then( () => {
           return DbMySql.connect().then((con) => {
             mySQL = con;

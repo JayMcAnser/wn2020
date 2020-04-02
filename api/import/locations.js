@@ -7,7 +7,7 @@ const Distribution = require('../model/distribution');
 const DbMySQL = require('../lib/db-mysql');
 const Config = require('config');
 const Logging = require('../lib/logging');
-const Address = require('../model/address');
+const Contact = require('../model/contact');
 const Carrier = require('../model/carrier');
 const ImportCarrier = require('../import/carriers');
 const recordValue = require('../import/import-helper').recordValue;
@@ -33,32 +33,32 @@ _recordValue = function(rec, part) {
   return undefined;
 };
 
-addressLink = async function(parent, addressId) {
+contactLink = async function(parent, addressId) {
   if (addressId) {
-    let addr = await parent.findOne({addressId: addressId});
-    if (!addr) {
+    let contact = await Contact.findOne({addressId: addressId});
+    if (!contact) {
       let myCon = await DbMySQL.connect();
-      let myAddr = await myCon.query('SELECT * FROM addresses WHERE address_ID=?', [addressId]);
-      if (myAddr.length === 0) {
-        addr = await Address.findField({guid: 'DISTR_NOT_FOUND'});
-        if (addr.length === 0) {
-          Logging.error(`the address.guid DISTR_NOT_FOUND does not exist. Must run Setup`);
+      let myContact = await myCon.query('SELECT * FROM addresses WHERE address_ID=?', [addressId]);
+      if (myContact.length === 0) {
+        contact = await Contact.findField({guid: 'DISTR_NOT_FOUND'});
+        if (contact.length === 0) {
+          Logging.error(`the contact.guid DISTR_NOT_FOUND does not exist. Must run Setup`);
           return undefined;
         }
-        addr = addr[0];
+        contact = contact[0];
       } else {
-        addr = await Address.create({addressId: addressId, isEmpty: false});
+        contact = await Contact.create({addressId: addressId, isEmpty: false});
       }
       if (Config.get('Sync.pullAddress')) {
-        if (myAddr.length) {
+        if (myContact.length) {
           for (let fieldName in AddrFieldMap) {
-            addr[fieldName] = _recordValue(myAddr[0], AddrFieldMap[fieldName]);
+            contact[fieldName] = _recordValue(myContact[0], AddrFieldMap[fieldName]);
           }
-          addr = await addr.save();
+          contact = await contact.save();
         }
       }
     }
-    return addr;
+    return contact;
   }
   return undefined;
 };
@@ -103,11 +103,11 @@ const ConvertMap = {
   footer : 'footer_text',
   vat: 'btw_prc',
 
-  contact: async (rec, mongoRec) => { return await addressLink(mongoRec, rec.contact_address_ID) },
+  contact: async (rec, mongoRec) => { return await contactLink(mongoRec, rec.contact_address_ID) },
   contactName: 'contact_address_name',
-  invoice: async (rec, mongoRec) => { return await addressLink(mongoRec, rec.invoice_address_ID)},
+  invoice: async (rec, mongoRec) => { return await contactLink(mongoRec, rec.invoice_address_ID)},
   invoiceName: 'invoice_address_name',
-  mail: async (rec, mongoRec) => { return await addressLink(mongoRec, rec.mail_address_ID)},
+  mail: async (rec, mongoRec) => { return await contactLink(mongoRec, rec.mail_address_ID)},
 
   shippingCosts: (rec) => { return makeNumber(rec.shipping_costs); },
   otherCosts: (rec) => { return makeNumber(rec.other_costs); },

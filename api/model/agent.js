@@ -6,7 +6,7 @@ const Mongoose = require('../lib/db-mongo');
 const Schema = Mongoose.Schema;
 const FlexModel = require('./flex-model-helper');
 const FieldSchema = require('./flex-model-helper').FieldSchema;
-const Address = require('./address');
+const Contact = require('./contact');
 const CodeFieldMap = require('./code').ShortFieldMap;
 
 /**

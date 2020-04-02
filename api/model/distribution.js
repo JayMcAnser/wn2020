@@ -18,7 +18,7 @@ const _ = require('lodash');
 const DistributionFieldMap = {
   code: {type: 'string', name: 'code', group: 'general'},
   invoiceNumber: {type: 'string', name: 'invoice number', group: 'contact'},
-  contact: {type: 'related', model: 'Address', name: 'contact', group: 'general', getValue: (rec, mongoRec) => {
+  contact: {type: 'related', model: 'Contact', name: 'contact', group: 'general', getValue: (rec, mongoRec) => {
     if (rec.invoice === undefined) {
       rec.invoice = _.cloneDeep(rec.contact);
     }
@@ -28,9 +28,9 @@ const DistributionFieldMap = {
     return this.contact;
   }},
   contactName: {type: 'string', name: 'contact name', group: 'contact'},
-  invoice: {type: 'related', model: 'Address', name: 'invoice', group: 'contact'},
+  invoice: {type: 'related', model: 'Contact', name: 'invoice', group: 'contact'},
   invoiceName: {type: 'string', name: 'invoice name', group: 'contact'},
-  mail: {type: 'related', model: 'Address', name: 'mail', group: 'contact'},
+  mail: {type: 'related', model: 'Contact', name: 'mail', group: 'contact'},
   insertion: {type: 'string', name: 'insertion', group: 'general'},
   event: {type: 'string', name: 'event', group: 'general'},
   header: {type: 'string', name: 'header', group: 'general'},
