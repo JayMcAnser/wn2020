@@ -171,6 +171,7 @@ class ArtImport {
       let start = 0;
       let counter = {count: 0, add: 0, update: 0, errors: []};
       let qry = [];
+      ImportHelper.stepStart('Art');
       do {
         let dis;
         let sql = `SELECT * FROM art ORDER BY art_ID LIMIT ${start * vm._step}, ${vm._step}`;
@@ -178,12 +179,12 @@ class ArtImport {
         if (qry.length > 0) {
           for (let l = 0; l < qry.length; l++) {
             await this._convertRecord(con, qry[l]);
-            counter.count++;
+            ImportHelper.step(counter.count++);
           }
-          ImportHelper.step(start++);
         }
+        start++;
       } while (qry.length > 0 && (this._limit === 0 || counter.count < this._limit));
-      ImportHelper.stepDone();
+      ImportHelper.stepEnd('Art');
       return resolve(counter)
     })
   }

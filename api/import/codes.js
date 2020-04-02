@@ -84,6 +84,7 @@ class CodeImport {
     let vm = this;
     return new Promise(async (resolve, reject) => {
       let start = 0;
+      ImportHelper.stepStart('Code')
       let counter = { count: 0, add: 0, update: 0, errors: []};
       let qry = [];
       do {
@@ -93,12 +94,12 @@ class CodeImport {
         if (qry.length > 0) {
           for (let l = 0; l < qry.length; l++) {
             await this._convertRecord(con, qry[l]);
-            counter.count++;
+            ImportHelper.step(counter.count++);
           }
-          ImportHelper.step(start++);
+          start++;
         }
       } while (qry.length > 0 && (this._limit === 0 || counter.count < this._limit));
-      ImportHelper.stepDone();
+      ImportHelper.stepEnd('Code');
       return resolve(counter)
     })
   }
