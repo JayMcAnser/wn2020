@@ -156,7 +156,7 @@ class ArtImport {
       }
     }
     try {
-      // should also import the codes and the agent
+      // should also import the agent
       art = Art.create(dataRec);
       art = await art.save();
     } catch (e) {
