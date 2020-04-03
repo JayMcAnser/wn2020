@@ -12,8 +12,9 @@ const ArtistFieldMape = require('./agent').FieldMap;
 const ErrorTypes = require('error-types');
 
 
-const ROLE_PRIMARY = 'primary';
-
+const ROLE_CREATOR = 'creator';
+const ROLE_CONTRIBUTOR = 'contributor';
+const ROLE_SUBJECT = 'sublect';
 /**
  * do NOT start a field with _. It will be skipped in the get
  * @type {{def: {type: StringConstructor, required: boolean}, text: StringConstructor}}
@@ -58,7 +59,7 @@ const FieldMap = {
     getValue: (rec) => {
       if (rec.agents && rec.agents.length) {
         for (let l = 0; l < rec.agents.length; l++) {
-          if (rec.agents[l].role === 'primary') {
+          if (rec.agents[l].role === ROLE_CREATOR) {
             return rec.agents[l].artist;
           }
         }
@@ -151,12 +152,12 @@ _artistPrimary = function(vm, currentData) {
   }
   if (currentData && currentData.artist) {
     let currentId = currentData.artist._id ? currentData.artist._id.toString() : currentData.artist;
-    if (currentData.role === ROLE_PRIMARY) {
+    if (currentData.role === ROLE_CREATOR) {
       for (let l = 0; l < vm.agents.length; l++) {
         let artist = vm.agents[l];
         if (currentId !== artist.artist._id.toString()) {
-          if (artist.role === ROLE_PRIMARY) {
-            artist.role = 'member';
+          if (artist.role === ROLE_CREATOR) {
+            artist.role = ROLE_CONTRIBUTOR;
             artist.percentage = 0;
             changed = true;
           } // else no change
@@ -170,7 +171,7 @@ _artistPrimary = function(vm, currentData) {
   let primIndex = 0;
   for (let l = 0; l < vm.agents.length; l++) {
     let artist = vm.agents[l];
-    if (artist.role === ROLE_PRIMARY) {
+    if (artist.role === ROLE_CREATOR) {
       primIndex = l;
     } else {
       perc += artist.percentage ? artist.percentage : 0;
@@ -227,11 +228,11 @@ ArtModel.methods.agentUpdate = function(id, data = false) {
     throw new ErrorTypes.ErrorNotFound('agent index not found');
   }
 };
+
 /**
  * the search is  {yearFrom: '1999'}
  * should become: {'_fields.string' : '1999', '_fields.def' : 'yearFrom'}
  */
-
 ArtModel.statics.findField = function(search = {}) {
   let qry = {};
   for (let key in search) {
@@ -245,3 +246,6 @@ ArtModel.statics.findField = function(search = {}) {
 
 module.exports = Mongoose.Model('Art', ArtModel);
 module.exports.FieldMap = FieldMap;
+module.exports.ROLE_CREATOR = ROLE_CREATOR;
+module.exports.ROLE_CONTRIBUTOR = ROLE_CONTRIBUTOR;
+module.exports.ROLE_SUBJECT = ROLE_SUBJECT;

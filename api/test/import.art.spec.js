@@ -98,7 +98,7 @@ describe('import.art', function() {
     return imp.runOnData(record).then( (rec) => {
       let mRec = rec.objectGet();
       assert.equal(mRec.artId, 1);
-      assert.equal(mRec.type, 'Video');
+      assert.equal(mRec.type, 'video');
       assert.equal(mRec.searchcode, 'searchcode');
       assert.equal(mRec.title, 'title');
       assert.equal(mRec.titleEn, 'titleEn');

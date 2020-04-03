@@ -10,6 +10,12 @@ const Code = require('../model/code');
 const Agent = require('../model/agent');
 const Setup = require('../lib/setup');
 
+
+const ROLE_CREATOR = require('../model/art').ROLE_CREATOR;
+const ROLE_CONTRIBUTOR = require('../model/art').ROLE_CONTRIBUTOR;
+const ROLE_SUBJECT = require('../model/art').ROLE_SUBJECT;
+
+
 describe('model.art', () => {
 
   let art;
@@ -67,13 +73,13 @@ describe('model.art', () => {
       agent1 = Agent.create({agentId: 1, name: 'agent 1'});
       agent1 = await agent1.save();
       agent1 = await Agent.findOne({agentId: 1});
-      art3.agentAdd({role: 'primary', artist: agent1, comments: 'first'});
+      art3.agentAdd({role: ROLE_CREATOR, artist: agent1, comments: 'first'});
       await art3.save();
       art3 = await Art.findOne({artId: 30});
       let obj = art3.objectGet();
       assert.isDefined(obj.agents);
       assert.equal(obj.agents.length, 1);
-      assert.equal(obj.agents[0].role, 'primary');
+      assert.equal(obj.agents[0].role, ROLE_CREATOR);
       assert.isDefined(obj.artist);
 
       // -- get the names of the artist
@@ -88,7 +94,7 @@ describe('model.art', () => {
     });
 
     it('update artist to member, but primary artist remains (is first one)', async() => {
-      art3.agentUpdate( 0, {role: 'member'});
+      art3.agentUpdate( 0, {role: ROLE_CONTRIBUTOR});
       await art3.save();
       art3 = await Art.findOne({artId: 30})
         .populate('agents.artist');
@@ -104,7 +110,7 @@ describe('model.art', () => {
       agent2 = Agent.create({agentId: 2, name: 'agent 2'});
       agent2 = await agent2.save();
       agent2 = await Agent.findOne({agentId: 2});
-      art3.agentAdd({role: 'primary', artist: agent2, percentage: 100});
+      art3.agentAdd({role: ROLE_CREATOR, artist: agent2, percentage: 100});
       await art3.save();
       art3 = await Art.findOne({artId: 30})
         .populate('agents.artist');
@@ -116,7 +122,7 @@ describe('model.art', () => {
       assert.equal(obj.agents[1].percentage, 100)
 
       // -- make none primary
-      art3.agentUpdate(1,{role: 'member', artist: agent2});
+      art3.agentUpdate(1,{role: ROLE_CONTRIBUTOR, artist: agent2});
       await art3.save();
       art3 = await Art.findOne({artId: 30})
         .populate('agents.artist');

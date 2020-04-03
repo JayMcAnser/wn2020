@@ -3,11 +3,17 @@ const DbMySQL = require('../lib/db-mysql');
 const Art = require('../model/art');
 const Logging = require('../lib/logging');
 const CodeImport = require('../import/codes');
+const AgentImport = require('../import/agents');
 const recordValue = require('./import-helper').recordValue;
 const makeNumber = require('./import-helper').makeNumber;
 const makeLength = require('./import-helper').makeLength;
 const insertField = require('./import-helper').insertField;
 const ImportHelper = require('./import-helper');
+
+const ROLE_CREATOR = require('../model/art').ROLE_CREATOR;
+const ROLE_CONTRIBUTOR = require('../model/art').ROLE_CONTRIBUTOR;
+const ROLE_SUBJECT = require('../model/art').ROLE_SUBJECT;
+
 // left: Mongo, right: Mysql
 
 
@@ -18,13 +24,13 @@ const FieldMap = {
   type: (rec) => {
     switch (rec.objecttype_ID) {
       case 1:
-        return 'Video';
+        return 'video';
       case 2:
-        return 'Installation';
+        return 'installation';
       case 5:
-        return 'Channel';
+        return 'channel';
       default:
-        return `Unknown (${rec.objecttype_ID})`
+        return `unknown (${rec.objecttype_ID})`
     }
   },
   searchcode: 'searchcode',
@@ -108,6 +114,7 @@ class ArtImport {
     this._limit = options.limit !== undefined ? options.limit : 0;
     this._step = 5;
     this._codeImport = new CodeImport();
+    this._agentImport = new AgentImport();
   }
 
   /**
@@ -155,9 +162,24 @@ class ArtImport {
         }
       }
     }
+    art = Art.create(dataRec);
+    // add agents
+    sql = `SELECT * FROM agent2art WHERE art_ID=${record.art_ID}`;
+    qry = await con.query(sql);
+    for (let agentIndex = 0; agentIndex < qry.length; agentIndex++) {
+      let agent = await this._agentImport.runOnData(qry[agentIndex], {loadSql: true});
+      if (agent) {
+        let role;
+        switch (qry[agentIndex].role_ID) {
+          case 2201: role = ROLE_CREATOR; break;
+          case 2202: role = ROLE_CONTRIBUTOR; break;
+          case 2203: role = ROLE_SUBJECT; break;
+          default: role = `unknown (${agent[agentIndex].roldID})`
+        }
+        art.agentAdd({artist: agent, percentage: qry[agentIndex].percentage,role: role })
+      }
+    }
     try {
-      // should also import the agent
-      art = Art.create(dataRec);
       art = await art.save();
     } catch (e) {
       Logging.error(`error importing art[${record.art_ID}]: ${e.message}`)
