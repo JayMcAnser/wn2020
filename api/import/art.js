@@ -163,6 +163,13 @@ class ArtImport {
       }
     }
     art = Art.create(dataRec);
+    // add the urls
+    sql = `SELECT * FROM art_url WHERE art_ID=${record.art_ID}`;
+    qry = await con.query(sql);
+    for (let urlIndex = 0; urlIndex < qry.length; urlIndex++) {
+      art.urls.push(qry[urlIndex].url);
+    }
+
     // add agents
     sql = `SELECT * FROM agent2art WHERE art_ID=${record.art_ID}`;
     qry = await con.query(sql);

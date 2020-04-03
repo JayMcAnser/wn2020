@@ -114,13 +114,24 @@ describe('import.art', function() {
       assert.equal(mRec.credits, 'credits')
     })
   });
+  //
+  // it('run - clean', () => {
+  //   const limit = 10;
+  //   let imp = new ImportArt({ limit: limit});
+  //   return imp.run(mySQL).then( (result) => {
+  //     assert.equal(result.count, limit)
+  //   })
+  // });
 
-  it('run - clean', () => {
-    const limit = 10;
-    let imp = new ImportArt({ limit: limit});
-    assert.isTrue(true);
-    return imp.run(mySQL).then( (result) => {
-      assert.equal(result.count, limit)
-    })
+  it ('import url', async() => {
+    let imp = new ImportArt({ limit: 2});
+    let sql = 'SELECT * from art WHERE art_ID=18149';
+    let qry = await mySQL.query(sql);
+    await imp.runOnData(qry[0]);
+    let rec = await Art.findOne({artId: 18149});
+    assert.isDefined(rec);
+    assert.isTrue(Object.keys(rec).length > 0);
+    let obj = rec.objectGet();
+    assert.equal(obj.urls.length, 2);
   })
 });

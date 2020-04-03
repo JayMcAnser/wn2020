@@ -8,7 +8,7 @@ const assert = chai.assert;
 const Contact = require('../model/contact');
 const Setup = require('../lib/setup');
 
-describe('model.address', () => {
+describe('model.contact', () => {
   before( () => {
     return Contact.deleteMany({}).then(() => {
       let setup = new Setup();
@@ -16,7 +16,7 @@ describe('model.address', () => {
     });
   });
 
-  describe('address', () => {
+  describe('base', () => {
     let cnt;
     let workId;
 
@@ -32,7 +32,8 @@ describe('model.address', () => {
       assert.equal(obj.addresses.length, 1);
       assert.equal(obj.addresses[0].usage, 'work');
       assert.equal(obj.addresses[0].zipcode,  '1017TE');
-      workId = obj.addresses[0].id
+      workId = obj.addresses[0].id;
+      assert.isDefined(workId)
     });
 
     it('update an address', async() => {

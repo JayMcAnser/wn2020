@@ -56,6 +56,14 @@ describe('model.art', () => {
     assert.isDefined(obj.codes);
     assert.equal(obj.codes.length, 1);
     assert.equal(obj.codes[0].text, 'code 12')
+
+    // without the populate
+    art2 = await Art.findOne({artId: 12})
+    ;
+    obj = art2.objectGet();
+    assert.isDefined(obj.codes);
+    assert.equal(obj.codes.length, 1);
+
   });
 
   describe('agents', () => {
@@ -143,6 +151,17 @@ describe('model.art', () => {
       assert.isDefined(obj.agents);
       assert.equal(obj.agents.length, 1);
       assert.equal(obj.agents[0].percentage, 100)
+    })
+  });
+  describe('url', () => {
+    it('accept url', async() => {
+      art.urls.push('www.test.com');
+      await art.save();
+      art = await Art.findOne({artId: art.artId});
+      let obj = art.objectGet();
+      assert.isDefined(obj.urls);
+      assert.equal(obj.urls.length, 1);
+      assert.equal(obj.urls[0], 'www.test.com');
     })
   })
 });

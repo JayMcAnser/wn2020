@@ -126,7 +126,9 @@ const FlexModel = {
         } // else skip this field
       }
     }
-    let fields = record.toObject ? record.toObject() : record;
+    // TODO: this goes VERY wrong
+    // let fields = record.toObject ? record.toObject() : record;
+    let fields = record.toObject ? record.toObject() : {};
     for (let fieldName in fields) {
       if (!fields.hasOwnProperty(fieldName) || fieldName[0] === '_') {
         continue
@@ -139,15 +141,33 @@ const FlexModel = {
           result[fieldName] = [];
           for (let l = 0; l < fields[fieldName].length; l++) {
             let item = fields[fieldName][l];
-            let r = this.objectGet(item, subFieldMap, [path, fieldName].join('/'), options);
-            result[fieldName].push(r);
+            if (item) {
+              if (typeof item === 'string') {
+                result[fieldName].push(item);
+              } else {
+                let r = this.objectGet({
+                  toObject: () => item,
+                  _id: item._id,
+                  _fields: item._fields
+                }, subFieldMap, [path, fieldName].join('/'), options);
+                result[fieldName].push(r);
+              }
+            }
           }
         }
       } else if (typeof fields[fieldName] === 'object') {
         let subFieldMap = options.rootType.relations ? options.rootType.relations()[[path, fieldName].join('/')] : undefined;
-        let d = this.objectGet(fields[fieldName], subFieldMap,  [path, fieldName].join('/'), options);
-        if (Object.keys(d).length > 0) {
-          result[fieldName] = d
+        let item = fields[fieldName];
+        if (item) {
+          // let d = this.objectGet(fields[fieldName], subFieldMap, [path, fieldName].join('/'), options);
+          let d = this.objectGet({
+            toObject: () => item,
+            _id: item._id,
+            _fields: item._fields
+          }, subFieldMap, [path, fieldName].join('/'), options);
+          if (Object.keys(d).length > 0) {
+            result[fieldName] = d
+          }
         }
       } else {
         result[fieldName] = fields[fieldName];

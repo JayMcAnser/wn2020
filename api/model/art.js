@@ -97,7 +97,8 @@ const ArtModelSchema = {
     type: Schema.ObjectId,
     ref: 'Code'
   }],
-  agents: [ArtistSchema]
+  agents: [ArtistSchema],
+  urls: [String],
 };
 
 let ArtModel = new Schema(ArtModelSchema);
@@ -115,6 +116,7 @@ ArtModel.statics.create = function(fields) {
 
 ArtModel.statics.relations = function() {
   return {
+    '/urls': {},
     '/codes': CodeFieldMap,
     '/agents': AgentFieldMap,
     '/agents/artist': ArtistFieldMape,
