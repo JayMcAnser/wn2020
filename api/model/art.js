@@ -11,6 +11,9 @@ const CodeFieldMap = require('./code').ShortFieldMap;
 const ArtistFieldMape = require('./agent').FieldMap;
 const ErrorTypes = require('error-types');
 
+
+const ROLE_PRIMARY = 'primary';
+
 /**
  * do NOT start a field with _. It will be skipped in the get
  * @type {{def: {type: StringConstructor, required: boolean}, text: StringConstructor}}
@@ -49,6 +52,8 @@ const FieldMap = {
   carriers: {type: 'string', name: 'carriers', group: 'presentation'},
   objects: {type: 'string', name: 'objects', group: 'presentation'},
 
+  royaltiesError: {type: 'string', name: 'royalties error', group: 'errors'},
+
   artist: {type: 'string', name: 'artist', group: 'general',
     getValue: (rec) => {
       if (rec.agents && rec.agents.length) {
@@ -70,7 +75,8 @@ const FieldMap = {
 };
 
 const AgentFieldMap = {
-  comments: {type: 'string', name: 'comments', group: 'general'}
+  comments: {type: 'string', name: 'comments', group: 'general'},
+
 };
 
 const ArtistSchema = {
@@ -79,6 +85,7 @@ const ArtistSchema = {
     ref: 'Agent'
   },
   role: String,
+  percentage: Number,
   _fields: [FieldSchema],
 };
 
@@ -130,26 +137,50 @@ ArtModel.methods.objectGet = function(fieldNames = []) {
   return FlexModel.objectGet(this, FieldMap, fieldNames);
 };
 
+/**
+ * takes care that only one artist is primary and that the
+ * total of the percentage === 100
+ *
+ * @param vm
+ * @param currentData
+ * @private
+ */
 _artistPrimary = function(vm, currentData) {
-  let changed = false;
-  if (currentData.artist === undefined) {
-    throw new ErrorTypes.ErrFieldNotFound('artist');
+  if (vm.agents.length === 0) {
+    return;
   }
-  let currentId = currentData.artist._id ? currentData.artist._id.toString() : currentData.artist;
-  if (currentData.role === 'primary' ) {
-    for (let l = 0; l < vm.agents.length; l++) {
-      let artist = vm.agents[l];
-      if (currentId !== artist.artist._id.toString()) {
-        if (artist.role === 'primary') {
-          artist.role = 'member';
-          changed = true;
+  if (currentData && currentData.artist) {
+    let currentId = currentData.artist._id ? currentData.artist._id.toString() : currentData.artist;
+    if (currentData.role === ROLE_PRIMARY) {
+      for (let l = 0; l < vm.agents.length; l++) {
+        let artist = vm.agents[l];
+        if (currentId !== artist.artist._id.toString()) {
+          if (artist.role === ROLE_PRIMARY) {
+            artist.role = 'member';
+            artist.percentage = 0;
+            changed = true;
+          } // else no change
         } // else no change
-      } // else no change
-    }
-    if (changed && vm.markModified) { // ?? needed ??
-      vm.markModified('agents')
+      }
     }
   }
+  // calc percentage
+  // the primary artist always get the rest. So giving a member 10% will lower the primary to 90%
+  let perc = 0;
+  let primIndex = 0;
+  for (let l = 0; l < vm.agents.length; l++) {
+    let artist = vm.agents[l];
+    if (artist.role === ROLE_PRIMARY) {
+      primIndex = l;
+    } else {
+      perc += artist.percentage ? artist.percentage : 0;
+    }
+  }
+  if (perc > 100) {
+    vm._fields.push({def:'royaltiesError', string: 'royalties are more the 100%'});
+  }
+  vm.agents[primIndex].percentage = (100 - perc) + (vm.agents[primIndex].percentage ? vm.agents[primIndex].percentage : 0);
+
 };
 
 /**
@@ -173,21 +204,25 @@ _agentIdToIndex = function(vm, id) {
 
 ArtModel.methods.agentAdd = function(data) {
   let dataRec = {_fields: []};
+  this.objectSet({royaltiesError: undefined});
   FlexModel.objectSet(dataRec, AgentFieldMap, data);
   this.agents.push(dataRec);
   _artistPrimary(this, data);
 };
 
 ArtModel.methods.agentUpdate = function(id, data = false) {
+  this.objectSet({royaltiesError: undefined});
   let ind = _agentIdToIndex(this, id);
   if (ind < this.agents.length) {
     if (Object.keys(data).length === 0) {
       this.agents.splice(ind, 1);
+      _artistPrimary(this);
     } else {
       FlexModel.objectSet(this.agents[ind], AgentFieldMap, data);
-      let dataObj = FlexModel.objectGet(this.agents[ind], AgentFieldMap)
+      let dataObj = FlexModel.objectGet(this.agents[ind], AgentFieldMap);
       _artistPrimary(this, dataObj);
     }
+
   } else {
     throw new ErrorTypes.ErrorNotFound('agent index not found');
   }

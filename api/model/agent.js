@@ -8,6 +8,7 @@ const FlexModel = require('./flex-model-helper');
 const FieldSchema = require('./flex-model-helper').FieldSchema;
 const Contact = require('./contact');
 const CodeFieldMap = require('./code').ShortFieldMap;
+const _ = require('lodash');
 
 /**
  * do NOT start a field with _. It will be skipped in the get
@@ -15,6 +16,17 @@ const CodeFieldMap = require('./code').ShortFieldMap;
 const FieldMap = {
   type: {type: 'string', name: 'type', group: 'general'},
   searchcode: {type: 'string', name: 'searchcode', group: 'general'},
+  contact: {type: 'related', model: 'Contact', name: 'contact', group: 'general', getValue: (rec, mongoRec) => {
+      if (rec.contactRights === undefined) {
+        rec.contactRights = _.cloneDeep(rec.contact);
+      }
+      if (rec.artistAddress === undefined) {
+        rec.artistAddress = _.cloneDeep(rec.contact)
+      }
+      return this.contact;
+    }},
+  contactRights: {type: 'related', model: 'Contact', name: 'contact rights', group: 'general'},
+  artistAddress: {type: 'related', model: 'Contact', name: 'artist address', group: 'general'},
   name: {type: 'string', name: 'type', group: 'general'},
   sortOn: {type: 'string', name: 'sort on', group: 'general'},
   died: {type: 'string', name: 'died', group: 'general'},

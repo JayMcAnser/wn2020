@@ -84,6 +84,7 @@ describe('model.art', () => {
       assert.equal(obj.agents.length, 1);
       assert.isDefined(obj.artist);
       assert.equal(obj.artist.name, 'agent 1');
+      assert.equal(obj.agents[0].percentage, 100);
     });
 
     it('update artist to member, but primary artist remains (is first one)', async() => {
@@ -96,13 +97,14 @@ describe('model.art', () => {
       assert.equal(obj.agents.length, 1);
       assert.isDefined(obj.artist);
       assert.equal(obj.artist.name, 'agent 1');
+      assert.equal(obj.agents[0].percentage, 100);
     });
 
     it('add other member', async() => {
       agent2 = Agent.create({agentId: 2, name: 'agent 2'});
       agent2 = await agent2.save();
       agent2 = await Agent.findOne({agentId: 2});
-      art3.agentAdd({role: 'primary', artist: agent2});
+      art3.agentAdd({role: 'primary', artist: agent2, percentage: 100});
       await art3.save();
       art3 = await Art.findOne({artId: 30})
         .populate('agents.artist');
@@ -111,6 +113,7 @@ describe('model.art', () => {
       assert.equal(obj.agents.length, 2);
       assert.isDefined(obj.artist);
       assert.equal(obj.artist.name, 'agent 2');
+      assert.equal(obj.agents[1].percentage, 100)
 
       // -- make none primary
       art3.agentUpdate(1,{role: 'member', artist: agent2});
@@ -133,7 +136,7 @@ describe('model.art', () => {
       obj = art3.objectGet();
       assert.isDefined(obj.agents);
       assert.equal(obj.agents.length, 1);
-
+      assert.equal(obj.agents[0].percentage, 100)
     })
   })
 });
