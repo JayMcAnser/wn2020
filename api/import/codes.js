@@ -59,7 +59,7 @@ class CodeImport {
       sql = `SELECT * FROM codes WHERE code_ID=${record.code_ID}`;
       qry = await con.query(sql);
       if (qry.length === 0) {
-        Logging.warn(`code[${record.art_ID}] does not exist. skipped`);
+      //  Logging.warn(`code[${record.code_ID}] does not exist. skipped`);
         return undefined
       }
       record = qry[0];

@@ -145,7 +145,7 @@ CarrierModel.statics.findField = function(search = {}) {
 
 CarrierModel.methods.artAdd = function(data) {
   let dataRec = {_fields: []};
-  FlexModel.objectSet(dataRec, ArtRelationFieldMap, data)
+  FlexModel.objectSet(dataRec, ArtRelationFieldMap, data);
   this.artwork.push(dataRec);
 };
 

@@ -27,42 +27,51 @@ describe('import.contact', function() {
 
   it('check field information', () => {
     let record =  {
-      "agent_ID": 1,
-      "objecttype_ID": 512,
+      "address_ID": 1,
+      "address_GUID": "guid",
+      "parent_ID": 1,
+      "type_ID": 101,
+      "full_name": "full name",
+      "department": "department",
+      // "contact_ID": 3,
+      "sub_name": 'sub name',
+      "first_name": 'first name',
+      "title": "title",
+      "first_letters": "letters",
+      "name_insertion": "insertion",
       "name": "name",
+      "name_suffix": 'suffix',
       "sort_on": "sort on",
-      "address_ID": 3,
-      "rights_ID": 3,
-      "contact_ID": 3,
-      "died": "died",
-      "biography_en": "bio en",
-      "biography_nl": "bio nl",
-      "comments": "comments",
-      "born": "born",
-      "born_in_country": "born country",
-      "customer_number": "customer nr",
-      "royalties_percentage": 50
+      "search": "search",
+      "mailchimp_json": 'mailchimp json',
+      "mailchimp_guid": 'mailchimp guid'
     };
-    let imp = new ImportAgent();
+    let imp = new ImportContact();
     return imp.runOnData(record).then( (mRec) => {
       let obj = mRec.objectGet();
-      assert.equal(obj.type, "collective in distribution");
+      assert.equal(obj.type, "institution");
+      assert.equal(obj.guid, 'guid');
+     // assert.equal(obj.parent, 1);
+     // assert.equal(obj.fullName, 'full name');
+      assert.equal(obj.department, 'department');
+      // assert.equal(obj.contactId, 3);
+      assert.equal(obj.subName, 'sub name');
+      assert.equal(obj.firstName, 'first name');
+      assert.equal(obj.title, 'title');
+      assert.equal(obj.firstLetters, 'letters');
+      assert.equal(obj.insertion, 'insertion');
       assert.equal(obj.name, 'name');
+      assert.equal(obj.suffix, 'suffix');
       assert.equal(obj.sortOn, 'sort on');
-      assert.equal(obj.died, 'died');
-      assert.equal(obj.biography, 'bio en');
-      assert.equal(obj.biographyNl, 'bio nl');
-      assert.equal(obj.comments, 'comments');
-      assert.equal(obj.born, 'born');
-      assert.equal(obj.bornInCountry, 'born country');
-      assert.equal(obj.customerNr, 'customer nr');
-      assert.equal(obj.percentage, 50);
+      assert.equal(obj.search, 'search');
+      assert.equal(obj.mailchimpJson,'mailchimp json');
+      assert.equal(obj.mailchimpGuid, 'mailchimp guid');
     })
   });
 
   it('run - clean', () => {
     const limit = 2;
-    let imp = new ImportAgent({ limit: limit});
+    let imp = new ImportContact({ limit: limit});
     return imp.run(mySQL).then( (result) => {
       assert.equal(result.count, limit)
     })
@@ -70,10 +79,10 @@ describe('import.contact', function() {
 
   it('import full record codes', async () => {
     const limit = 10;
-    let imp = new ImportAgent({ limit: limit});
-    await imp.runOnData({agent_ID: 3});
-    let agent = await Agent.findOne({agentId: 3});
-    assert.isDefined(agent);
-    assert.equal(agent.agentId, 3)
+    let imp = new ImportContact({ limit: limit});
+    await imp.runOnData({address_ID: 3});
+    let cnt = await Contact.findOne({addressId: 3});
+    assert.isDefined(cnt);
+    assert.equal(cnt.addressId, 3)
   })
 });

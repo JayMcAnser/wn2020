@@ -12,21 +12,40 @@ const ImportHelper = require('./import-helper');
 
 
 const FieldMap = {
-  departement: 'department',
+  addressId: 'address_ID',
+  type: (rec) => {
+    switch (rec.type_ID) {
+      case 101:
+        return 'institution';
+      case 102:
+        return 'male';
+      case 103:
+        return 'female';
+      case 104:
+        return 'unknown';
+      default:
+        return `Unknown (${rec.type_ID})`
+    }
+  },
+  guid: 'address_GUID',
+  // parent: async(rec, mongoRec) => { return await contactLine(mongoRec, rec.parent_ID)},
+  department: 'department',
   subName: 'sub_name',
-  firstName: 'firstName',
+  firstName: 'first_name',
   title: 'title',
-  firstLetters: 'firstLetters',
+  firstLetters: 'first_letters',
   insertion: 'name_insertion',
   name : 'name',
   suffix: 'name_suffix',
   search : 'search',
-  sortOn: 'sortOn',
+  sortOn: 'sort_on',
+  mailchimpJson: 'mailchimp_json',
+  mailchimpGuid: 'mailchimp_guid',
 };
 
 class ContactImport {
   constructor(options = {}) {
-    const STEP = 5
+    const STEP = 5;
     this._limit = options.limit !== undefined ? options.limit : 0;
     this._step = this._limit < STEP ? this._limit : STEP;
     this._codeImport = new CodeImport();
@@ -42,14 +61,14 @@ class ContactImport {
    * @private
    */
   async _convertRecord(con, record, options = {}) {
-    let contact = await Art.findOne({addressId: record.address_ID});
+    let contact = await Contact.findOne({addressId: record.address_ID});
     if (contact) {
       return contact;
     }
     let sql;
     let qry;
     if (options.loadSql) {
-      sql = `SELECT * FROM address WHERE address_ID=${record.address_ID}`;
+      sql = `SELECT * FROM addresses WHERE address_ID=${record.address_ID}`;
       qry = await con.query(sql);
       if (qry.length === 0) {
         Logging.warn(`address[${record.address_ID}] does not exist. skipped`);
@@ -62,7 +81,7 @@ class ContactImport {
       if (!FieldMap.hasOwnProperty(fieldName)) {
         continue
       }
-      dataRec[fieldName] = await recordValue(record, FieldMap[fieldName], Art);
+      dataRec[fieldName] = await recordValue(record, FieldMap[fieldName], Contact);
     }
     //-- add the codes
     sql = `SELECT * FROM address2code WHERE address_ID=${record.address_ID}`;
@@ -96,7 +115,7 @@ class ContactImport {
       ImportHelper.stepStart('Contact');
       do {
         let dis;
-        let sql = `SELECT * FROM art ORDER BY address_ID LIMIT ${start * vm._step}, ${vm._step}`;
+        let sql = `SELECT * FROM addresses ORDER BY address_ID LIMIT ${start * vm._step}, ${vm._step}`;
         qry = await con.query(sql);
         if (qry.length > 0) {
           for (let l = 0; l < qry.length; l++) {
@@ -116,9 +135,6 @@ class ContactImport {
     return this._convertRecord(con, record, options);
   }
 }
-module.exports = ArtImport;
 
-
-
-
+module.exports = ContactImport;
 module.exports.FieldMap = FieldMap;

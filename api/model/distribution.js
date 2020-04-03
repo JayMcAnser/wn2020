@@ -38,7 +38,7 @@ const DistributionFieldMap = {
   eventStartDate: {type: 'date', name: 'event start date', group: 'general'},
   evendEndDate: {type: 'date', name: 'event end date', group: 'general'},
   comments: {type: 'string', name: 'comments', group: 'general'},
-  vat: {type: 'number', name: 'vat', group: 'general'},
+  vat: {type: 'string', name: 'vat', group: 'general'},
   productionCosts: {type: 'number', name: 'production costs', group: 'general'},
   shippingCosts: {type: 'number', name: 'shipping costs', group: 'general'},
   otherCosts: {type: 'number', name: 'other costs', group: 'general'},
@@ -184,7 +184,7 @@ DistributionModel.methods.lineUpdate = function(index, itemData) {
   let ind = index;
   if (typeof index !== 'number') {
     for (ind = 0; ind < this.line.length; ind++) {
-      if (index.toString() === this.line[l].toString()) {
+      if (index.toString() === this.line[ind].toString()) {
         break;
       }
     }
@@ -201,7 +201,7 @@ DistributionModel.methods.lineRemove = function(index) {
   let ind = index;
   if (typeof index !== 'number') {
     for (ind = 0; ind < this.line.length; ind++) {
-      if (index.toString() === this.line[l].toString()) {
+      if (index.toString() === this.line[ind].toString()) {
         break;
       }
     }

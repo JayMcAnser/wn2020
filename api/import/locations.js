@@ -7,13 +7,14 @@ const Distribution = require('../model/distribution');
 const DbMySQL = require('../lib/db-mysql');
 const Config = require('config');
 const Logging = require('../lib/logging');
-const Contact = require('../model/contact');
+// const Contact = require('../model/contact');
 const Carrier = require('../model/carrier');
 const ImportCarrier = require('../import/carriers');
+const ImportContact = require('../import/contact');
 const recordValue = require('../import/import-helper').recordValue;
 const makeNumber = require('../import/import-helper').makeNumber;
-const AddrFieldMap = require('./addresses').FieldMap;
-const CarrierFieldMap = require('./carriers').FieldMap;
+// const AddrFieldMap = require('./contact').FieldMap;
+// const CarrierFieldMap = require('./carriers').FieldMap;
 const ImportHelper = require('./import-helper');
 
 
@@ -33,60 +34,24 @@ _recordValue = function(rec, part) {
   return undefined;
 };
 
+let importContact = false;
 contactLink = async function(parent, addressId) {
   if (addressId) {
-    let contact = await Contact.findOne({addressId: addressId});
-    if (!contact) {
-      let myCon = await DbMySQL.connect();
-      let myContact = await myCon.query('SELECT * FROM addresses WHERE address_ID=?', [addressId]);
-      if (myContact.length === 0) {
-        contact = await Contact.findField({guid: 'DISTR_NOT_FOUND'});
-        if (contact.length === 0) {
-          Logging.error(`the contact.guid DISTR_NOT_FOUND does not exist. Must run Setup`);
-          return undefined;
-        }
-        contact = contact[0];
-      } else {
-        contact = await Contact.create({addressId: addressId, isEmpty: false});
-      }
-      if (Config.get('Sync.pullAddress')) {
-        if (myContact.length) {
-          for (let fieldName in AddrFieldMap) {
-            contact[fieldName] = _recordValue(myContact[0], AddrFieldMap[fieldName]);
-          }
-          contact = await contact.save();
-        }
-      }
+    if (importContact === false) {
+      importContact = new ImportContact();
     }
-    return contact;
+    return importContact.runOnData({address_ID: addressId}, {loadSql: true});
   }
   return undefined;
 };
 
+let importCarrier = false;
 carrierLink = async function(parent, carrierId) {
   if (carrierId){
-    let carrier = await parent.findOne({carrierId: carrierId});
-    if (!carrier) {
-      let myCon = await DbMySQL.connect();
-      let myCarrier = await myCon.query('SELECT * FROM carrier WHERE carrier_ID=?', [carrierId]);
-      if (myCarrier.length === 0) {
-        carrier = await Carrier.findField({locationNumber: 'CARRIER_NOT_FOUND'});
-        if (carrier.length === 0) {
-          Logging.error(`the carrier.locationNumber == CARRIER_NOT_FOUND does not exist. Looking for id: ${carrierId}. Must run Setup`);
-          return undefined;
-        }
-        return carrier[0]._id.toString();
-      } else {
-        carrier = await Carrier.create({carrierId: carrierId, isEmpty: false});
-      }
-      if (Config.get('Sync.pullCarrier')) {
-        if (myCarrier.length) {
-          let imp = new ImportCarrier();
-          await imp.runOnData(myCarrier[0]);
-        }
-      }
+    if (importCarrier === false) {
+      importCarrier = new ImportCarrier();
     }
-    return carrier._id.toString();
+    return importCarrier.runOnData({carrier_ID: carrierId}, {loadSql: true});
   }
   return undefined;
 };
@@ -154,7 +119,7 @@ class LocationImport {
             if (!itemMap.hasOwnProperty(fieldName)) {
               continue
             }
-            let v = await recordValue(rec, itemMap[fieldName], Carrier);
+            let v = await recordValue(rec, itemMap[fieldName], Distribution);
             if (v !== undefined) {
               lineRec[fieldName] = v
             }
