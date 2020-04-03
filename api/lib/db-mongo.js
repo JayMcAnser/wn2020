@@ -24,6 +24,7 @@ let DbMongo  = {
       connectionString += '?' + Config.get('Database.Mongo.uriParam')
     }
 
+
     if (Config.has('Database.Mongo.username') && Config.get('Database.Mongo.username')) {
       let pwd = Config.get('Database.Mongo.password');
       if (pwd) {
@@ -36,6 +37,9 @@ let DbMongo  = {
       connectionString = `${Config.get('Database.Mongo.prefix')}://${connectionString}`;
     }
 
+    if (Config.get('Database.Mongo.debug')) {
+      Mongoose.set('debug', true)
+    }
     Logging.info(`[dbMongo] connecting to ${connectionString}`);
     // https://mongoosejs.com/docs/deprecations.html
     Mongoose.set('useCreateIndex', true);

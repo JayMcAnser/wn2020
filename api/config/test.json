@@ -1,7 +1,8 @@
 {
   "Database": {
     "Mongo": {
-      "database": "testing"
+      "database": "testing",
+      "debug": false
     }
   },
   "Sync": {

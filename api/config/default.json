@@ -8,7 +8,8 @@
       "username": false,
       "password": false,
       "database": "watsnext",
-      "connectionString": "mongodb+srv://dropperweb:rE-4EGNsPV6LzgP@dropperweb-ussdu.azure.mongodb.net/test?retryWrites=true&w=majority"
+      "connectionString": "mongodb+srv://dropperweb:rE-4EGNsPV6LzgP@dropperweb-ussdu.azure.mongodb.net/test?retryWrites=true&w=majority",
+      "debug": false
     },
     "MySQL": {
       "host": "mysql.li-ma.nl",

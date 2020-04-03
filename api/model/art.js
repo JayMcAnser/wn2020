@@ -8,6 +8,8 @@ const FlexModel = require('./flex-model-helper');
 const FieldSchema = require('./flex-model-helper').FieldSchema;
 const Contact = require('./contact');
 const CodeFieldMap = require('./code').ShortFieldMap;
+const ArtistFieldMape = require('./agent').FieldMap;
+const ErrorTypes = require('error-types');
 
 /**
  * do NOT start a field with _. It will be skipped in the get
@@ -46,9 +48,38 @@ const FieldMap = {
   projection: {type: 'boolean', name: 'projection', group: 'presentation'},
   carriers: {type: 'string', name: 'carriers', group: 'presentation'},
   objects: {type: 'string', name: 'objects', group: 'presentation'},
+
+  artist: {type: 'string', name: 'artist', group: 'general',
+    getValue: (rec) => {
+      if (rec.agents && rec.agents.length) {
+        for (let l = 0; l < rec.agents.length; l++) {
+          if (rec.agents[l].role === 'primary') {
+            return rec.agents[l].artist;
+          }
+        }
+        return rec.agents[0].artist;
+      }
+      return undefined
+    },
+    setValue: () => undefined
+  },
+
   //
   // owner: {type: 'address', name: 'owner', group: 'testing'},
   // also: {type: 'related', model: 'Contact', name: 'also', group: 'testing'},
+};
+
+const AgentFieldMap = {
+  comments: {type: 'string', name: 'comments', group: 'general'}
+};
+
+const ArtistSchema = {
+  artist: {
+    type: Schema.ObjectId,
+    ref: 'Agent'
+  },
+  role: String,
+  _fields: [FieldSchema],
 };
 
 const ArtModelSchema = {
@@ -57,7 +88,8 @@ const ArtModelSchema = {
   codes: [{
     type: Schema.ObjectId,
     ref: 'Code'
-  }]
+  }],
+  agents: [ArtistSchema]
 };
 
 let ArtModel = new Schema(ArtModelSchema);
@@ -75,7 +107,9 @@ ArtModel.statics.create = function(fields) {
 
 ArtModel.statics.relations = function() {
   return {
-    '/codes': CodeFieldMap
+    '/codes': CodeFieldMap,
+    '/agents': AgentFieldMap,
+    '/agents/artist': ArtistFieldMape,
   }
 };
 /**
@@ -96,6 +130,68 @@ ArtModel.methods.objectGet = function(fieldNames = []) {
   return FlexModel.objectGet(this, FieldMap, fieldNames);
 };
 
+_artistPrimary = function(vm, currentData) {
+  let changed = false;
+  if (currentData.artist === undefined) {
+    throw new ErrorTypes.ErrFieldNotFound('artist');
+  }
+  let currentId = currentData.artist._id ? currentData.artist._id.toString() : currentData.artist;
+  if (currentData.role === 'primary' ) {
+    for (let l = 0; l < vm.agents.length; l++) {
+      let artist = vm.agents[l];
+      if (currentId !== artist.artist._id.toString()) {
+        if (artist.role === 'primary') {
+          artist.role = 'member';
+          changed = true;
+        } // else no change
+      } // else no change
+    }
+    if (changed && vm.markModified) { // ?? needed ??
+      vm.markModified('agents')
+    }
+  }
+};
+
+/**
+ * find the index in the agents array by the index or by the _id
+ *
+ * @param vm
+ * @param id
+ * @private
+ */
+_agentIdToIndex = function(vm, id) {
+  let ind = id;
+  if (typeof id !== 'number') {
+    for (ind = 0; ind < vm.agents.length; ind++) {
+      if (id.toString() === vm.agents[ind]._id.toString()) {
+        break;
+      }
+    }
+  }
+  return ind;
+};
+
+ArtModel.methods.agentAdd = function(data) {
+  let dataRec = {_fields: []};
+  FlexModel.objectSet(dataRec, AgentFieldMap, data);
+  this.agents.push(dataRec);
+  _artistPrimary(this, data);
+};
+
+ArtModel.methods.agentUpdate = function(id, data = false) {
+  let ind = _agentIdToIndex(this, id);
+  if (ind < this.agents.length) {
+    if (Object.keys(data).length === 0) {
+      this.agents.splice(ind, 1);
+    } else {
+      FlexModel.objectSet(this.agents[ind], AgentFieldMap, data);
+      let dataObj = FlexModel.objectGet(this.agents[ind], AgentFieldMap)
+      _artistPrimary(this, dataObj);
+    }
+  } else {
+    throw new ErrorTypes.ErrorNotFound('agent index not found');
+  }
+};
 /**
  * the search is  {yearFrom: '1999'}
  * should become: {'_fields.string' : '1999', '_fields.def' : 'yearFrom'}
