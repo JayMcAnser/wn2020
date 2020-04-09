@@ -11,13 +11,13 @@ const exact = require('../../exact').exact;
 
 module.exports = getRoute = {
   method: 'GET',
-  path: '/devision',
+  path: '/division',
   config: {
     auth: false,
   },
   handler: async function(request, h) {
     try {
-      return exact.devision()
+      return exact.division()
     } catch (err) {
       return ErrorType.toBoomError(err, request);
     }

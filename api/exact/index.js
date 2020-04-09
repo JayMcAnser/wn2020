@@ -21,20 +21,15 @@ class Exact {
     this._clientSecret = Config.get('Exact.clientSecret');
     this._tokenType = false;
     this._apiVersion = 'v1';
-    this._division = 0;
-    // ----- debugging the requests
     // this.apiServer.interceptors.request.use(request => {
     //   console.log('Starting Request', request)
     //   return request
-    // });
-
-    // ---
-    // this will always be called if the access token retires or no token available
+    // })
     this.apiServer.interceptors.response.use(null, (error) => {
       if (error.config && error.response && error.response.status === 401) {
         return this.updateToken().then((token) => {
           this.setAuthorization(token);
-       //   error.config.headers.Authorization = token;
+          //   error.config.headers.Authorization = token;
           // Here, the request data will be double stringified with qs.stringify,
           // potentially leading to 422 responses or similar.
           return this.apiServer.request(error.config);
@@ -49,13 +44,10 @@ class Exact {
    * create the string for the url including the version of the api
    *
    * @param name String
-   * @return Promise({string})
+   * @return {string}
    */
-  async endpoint(name) {
-    if (!this._division) {
-      this._division = await this.retrieveDivision();
-    }
-    return Promise.resolve(`/${this._apiVersion}/${this._division}/${name}`);
+  endpoint(name) {
+    return `/${this._apiVersion}/${name}`
   }
   /**
    * generate the url that should be called by the user to activate the
@@ -73,7 +65,6 @@ class Exact {
     return this._code;
   }
   set code(v) {
-    Logging.info(`setting code to: ${v}`);
     this._code = v;
   }
 
@@ -131,7 +122,7 @@ class Exact {
     this._refreshToken = false;
     try {
       let result = await this.apiServer.post('/oauth2/token', querystring.stringify(tokenRequest));
-      // this._accessToken = result.data.access_token;
+      this._accessToken = result.data.access_token;
       this._refreshToken = result.data.refresh_token;
       this._tokenType = result.data.token_type;
       LocalConfig.writeValue('Exact.refreshToken', this._refreshToken);
@@ -150,9 +141,9 @@ class Exact {
    *    https://start.exactonline.nl/docs/HlpRestAPIResourcesDetails.aspx?name=SystemSystemMe
    * @return {Promise<void>}
    */
-  async _retrieveDivision() {
-   // let token = await this.updateToken();
-    let url = `/${this._apiVersion}/current/Me?$select=CurrentDivision`;
+  async division() {
+    // let token = await this.updateToken();
+    let url = this.endpoint('current/Me?$select=CurrentDivision');
     // this.setAuthorization(token);
     let result = await this.apiServer.get(url);
     if (result.status === 200) {
@@ -164,63 +155,6 @@ class Exact {
     return false;
   }
 
-  /**
-   * r
-   * @param result
-   * @return {{}|VueI18n.d|((value: (number | Date), key?: VueI18n.Path, locale?: VueI18n.Locale) => VueI18n.DateTimeFormatResult)|((value: (number | Date), args?: {[p: string]: string}) => VueI18n.DateTimeFormatResult)|string|string}
-   * @private
-   */
-  _processResult(result) {
-    if (result && result.data) {
-      if (result.data.d) {
-        return result.data.d;
-      } else {
-        Logging.warn(`unable to parse result.data.d: ${resuls.data.toString()}`);
-        return {}
-      }
-    } else {
-      Logging.warn(`no result.data`);
-      return {}
-    }
-  }
-
-  _processError(result) {
-    Logging.warn(`error: ${result.toString()}`);
-    return result;
-  }
-  /**
-   * post an action to the server
-   * @param url
-   * @param data
-   * @return {Promise<AxiosResponse<T>>}
-   */
-  async post(url, data) {
-    let endPoint = await this.endpoint(data);
-    return this.apiServer.post(endPoint, querystring.stringify(data)).then( (result) => {
-      if (result.status === 200) {
-        return Promise.resolve(this._processResult(result))
-      } else {
-        return Promise.reject(this._processError(result));
-      }
-    })
-  }
-
-  /**
-   * get data from the server
-   * @param url
-   * @param data
-   * @return {Promise<AxiosResponse<T>>}
-   */
-  async get(url, params = {}) {
-    let endPoint = await this.endpoint(data);
-    return this.apiServer.get(endPoint).then( (result) => {
-      if (result.status === 200) {
-        return Promise.resolve(this._processResult(result))
-      } else {
-        return Promise.reject(this._processError(result));
-      }
-    })
-  }
 }
 
 
