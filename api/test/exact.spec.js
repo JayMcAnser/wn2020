@@ -11,8 +11,14 @@ describe('exact', function() {
 
   describe('general', () => {
     it('division', async() => {
-      let div = await exact.division();
+      let div = await exact._retrieveDivision();
       assert.equal(div, 2722931)
     })
-  })
+  });
+  //
+  // describe('get', () => {
+  //   it('crm', () => {
+  //
+  //   })
+  // })
 });
