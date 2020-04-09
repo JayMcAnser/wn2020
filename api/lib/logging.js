@@ -7,6 +7,7 @@
 
 const LogWinston = require('logger').LogWinston;
 const LogFake = require('logger').LogFake;
+const Path = require('path');
 const Config = require('config');
 
 let logger = false;

@@ -70,7 +70,7 @@ describe('import.contact', function() {
   });
 
   it('run - clean', () => {
-    const limit = 2;
+    const limit = 10;
     let imp = new ImportContact({ limit: limit});
     return imp.run(mySQL).then( (result) => {
       assert.equal(result.count, limit)

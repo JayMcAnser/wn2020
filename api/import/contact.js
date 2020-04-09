@@ -43,12 +43,57 @@ const FieldMap = {
   mailchimpGuid: 'mailchimp_guid',
 };
 
+const AddressFieldMap = {
+  type: (rec) => {
+    switch (rec.type_ID) {
+      case 0: return undefined;
+      case 111: return 'address';
+      case 151: return 'address';
+      case 152: return 'telephone';
+      case 153: return 'fax';
+      case 154: return 'email';
+      case 155: return 'url';
+      case 156: return 'email'; // with name
+      case 160: return 'vat';
+      case 161: return 'customer number';
+      default:
+        Logging.warn(`unknown address field type (${rec.type_ID})`)
+        return undefined
+    }
+  },
+  street: 'street',
+  number: 'number',
+  city: 'city',
+  zipcode: 'zipcode',
+  state: 'state',
+  country: 'country'
+};
+
+
 class ContactImport {
   constructor(options = {}) {
     const STEP = 5;
     this._limit = options.limit !== undefined ? options.limit : 0;
     this._step = this._limit < STEP ? this._limit : STEP;
     this._codeImport = new CodeImport();
+    this._countries = false;
+  }
+
+  async _countryTranslate(con, id) {
+    if (this._countries === false) {
+      let sql = 'SELECT * FROM codes WHERE parent_ID=4';
+      let qry = await con.query(sql);
+      this._countries = {};
+      for (let l = 0; l < qry.length; l++) {
+        this._countries['c' + qry[l].code_ID] = qry[l].text;
+      }
+    }
+    let r = this._countries['c' + id];
+    if (r === undefined) {
+      Logging.warn(`unknown country code: ${id}`);
+      r =  'Netherlands'
+    }
+    return Promise.resolve(r);
   }
 
   /**
@@ -96,9 +141,29 @@ class ContactImport {
         }
       }
     }
+    contact = Contact.create(dataRec);
+    // -- add the addresses
+    sql = `SELECT * FROM addr_fields WHERE address_ID=${record.address_ID} AND code_ID=151`;
+    qry = await con.query(sql);
+    for (let addrIndex = 0; addrIndex < qry.length; addrIndex++) {
+      let rec = qry[addrIndex];
+      let country = await this._countryTranslate(con, rec.country_ID);
+      rec.country = country;
+      let addrRec = {};
+      for (let fieldName in AddressFieldMap) {
+        if (!AddressFieldMap.hasOwnProperty(fieldName)) {
+          continue
+        }
+        let a = await recordValue(rec, AddressFieldMap[fieldName]);
+        if (a !== undefined) {
+          addrRec[fieldName] = a;
+        }
+      }
+      contact.addressAdd(addrRec);
+    }
+
+
     try {
-      // should also import the agent
-      contact = Contact.create(dataRec);
       contact = await contact.save();
     } catch (e) {
       Logging.error(`error importing address[${record.address_ID}]: ${e.message}`)

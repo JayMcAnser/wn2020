@@ -9,13 +9,15 @@
     "pullAddress": true
   },
   "Logging": {
-     "transports": [
-       {
-         "type": "console",
-         "level": "info",
-         "colorize": true
-       }
-     ]
+    "transports": [
+      {
+        "type": "console",
+        "level": "info",
+        "colorize": true
+      }
+    ]
+  },
+  "Test": {
+    "value1": "XXX"
   }
-
 }

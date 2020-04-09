@@ -54,5 +54,12 @@
         "filename": "logging/error.log"
       }
     ]
+  },
+  "Exact": {
+    "refreshToken": false,
+    "code": false,
+    "clientId": "ddc28ab0-dc93-4478-96a3-7495a7ea174e",
+    "clientSecret": "TEnnwNqFwmre",
+    "authUrl": "http://localhost:3000/exact"
   }
 }

@@ -17,6 +17,13 @@ module.exports = [
     routes: {
       prefix: '/user'
     }
-  }
+  },
+  {
+    plugin: require('./exact'),
+    routes: {
+      prefix: '/exact'
+    }
+  },
+
 ];
 

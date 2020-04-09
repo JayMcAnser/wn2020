@@ -26,3 +26,4 @@ _save
 logging
 /data
 test/jest/coverage/
+api/config/local.json

@@ -1,5 +1,5 @@
 /**
- * Test the Art model
+ * Test the Agent model
  */
 
 const Db = require('./init.db').DbMongo;
