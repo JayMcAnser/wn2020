@@ -27,7 +27,8 @@
   },
   "Setup": {
     "emailRoot": "info@watsnext.nl",
-    "passwordRoot": "VerySecret"
+    "passwordRoot": "VerySecret",
+    "debug": true
   },
   "Sync": {
     "pullAddress": true,

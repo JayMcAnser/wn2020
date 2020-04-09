@@ -17,7 +17,7 @@ module.exports = getRoute = {
   },
   handler: async function(request, h) {
     try {
-      return exact.division()
+      return exact._retrieveDivision()
     } catch (err) {
       return ErrorType.toBoomError(err, request);
     }
