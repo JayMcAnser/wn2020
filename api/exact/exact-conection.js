@@ -1,5 +1,5 @@
 /**
- * Exact connector version 0.1.0
+ * Exact connector version 0.2.0
  *
  * ALWAYS: You need a new first token. There for
  *   1. call the registerUrl (localhost:3000/exact/registerUrl
@@ -8,6 +8,8 @@
  *   4. the system will update the local.json to set the refresh token.
  *   5. access is now automatically renewed
  *
+ *
+ * The connector needs a place to store the refreshToken on a per client base.
  */
 
 const axios = require('axios');
@@ -16,23 +18,41 @@ const Config = require('config');
 const Logging = require('../lib/logging');
 const LocalConfig = require('../lib/local-config');
 
-class Exact {
+
+
+/**
+ * Reading and writing the refresh token
+ * change these functions if there are multiple exact connections
+ * @param token
+ */
+writeRefreshToken= function(token) {
+  LocalConfig.writeValue('Exact.refreshToken', this._refreshToken);
+};
+
+readRefreshToken = function() {
+  return Config.get('Exact.refreshToken');
+};
+
+class ExactConnection {
   constructor(options = {}) {
+    this.writeRefreshToken = options.writeRefreshToken === undefined ? writeRefreshToken : options.writeRefreshToken;
+    this.readRefreshToken = options.readRefreshToken === undefined ? readRefreshToken : options.readRefreshToken;
     this._code = options.code === undefined ? false : options.code;
     this.apiServer = axios.create({
       baseURL: 'https://start.exactonline.nl/api'
     });
-    this._refreshToken = Config.get('Exact.refreshToken');
+    this._refreshToken = this.readRefreshToken();
     this._accessToken = false;
     this._clientId = Config.get('Exact.clientId');
     this._clientSecret = Config.get('Exact.clientSecret');
     this._tokenType = false;
     this._apiVersion = 'v1';
     this._division = false;
+
     // this.apiServer.interceptors.request.use(request => {
     //   console.log('Starting Request', request)
     //   return request
-    // })
+    // });
     this.apiServer.interceptors.response.use(null, (error) => {
       if (error.config && error.response && error.response.status === 401) {
         this._accessToken = false;
@@ -101,7 +121,7 @@ class Exact {
         }
         this._refreshToken = result.data.refresh_token;
         this._tokenType = result.data.token_type;
-        LocalConfig.writeValue('Exact.refreshToken', this._refreshToken);
+        this.writeRefreshToken(this._refreshToken);
       } catch(e) {
         Logging.error(`refresh exact token (${e.message})`);
         return false;
@@ -132,7 +152,8 @@ class Exact {
       }
       this._refreshToken = result.data.refresh_token;
       this._tokenType = result.data.token_type;
-      LocalConfig.writeValue('Exact.refreshToken', this._refreshToken);
+      // LocalConfig.writeValue('Exact.refreshToken', this._refreshToken);
+      this.writeRefreshToken(this._refreshToken);
       // let tx = await this.updateToken();
       return (this._accessToken && this._refreshToken);
       // set the axios header for the access token and connect the 403 to the requests
@@ -187,7 +208,11 @@ class Exact {
   _processResult(result) {
     if (result && result.data) {
       if (result.data.d) {
-        return result.data.d.results;
+        if (result.data.d.results) {
+          return result.data.d.results;
+        } else {
+          return result.data.d
+        }
       } else {
         Logging.warn(`unable to parse result.data.d: ${resuls.data.toString()}`);
         return {}
@@ -285,7 +310,7 @@ class Exact {
 
 
 
-const exact = new Exact();
+const exact = new ExactConnection();
 
-module.exports = Exact;
+module.exports = ExactConnection;
 module.exports.exact = exact;

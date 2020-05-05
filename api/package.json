@@ -15,7 +15,7 @@
     "@hapi/hapi": "^19.1.1",
     "axios": "^0.19.2",
     "bcryptjs": "^2.4.3",
-    "config": "^3.3.0",
+    "config": "^3.3.1",
     "email-validator": "^2.0.4",
     "error-types": "git+https://github.com/jaymcanser/error-types.git",
     "hapi-cors": "^1.0.3",
@@ -24,14 +24,15 @@
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.15",
     "logger": "git+https://github.com/jaymcanser/logger.git",
-    "mongoose": "^5.9.4",
-    "postmark": "^2.5.0",
+    "mongoose": "^5.9.11",
+    "mongoose-undo": "git+https://github.com/JayMcAnser/mongoose-undo-plugin.git",
+    "postmark": "^2.5.2",
     "uuid": "^3.4.0"
   },
   "devDependencies": {
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
-    "mocha": "^6.2.2",
+    "mocha": "^6.2.3",
     "nyc": "^14.1.1"
   }
 }

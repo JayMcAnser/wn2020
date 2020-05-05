@@ -1,13 +1,14 @@
 /**
- * Test the exact interface
+ * Test the ExactConnection interface
  */
 
 const init = require('./init');
 const chai = require('chai');
 const assert = chai.assert;
-const exact = require('../exact').exact;
+const exact = require('../exact/conection').exact;
+const Contact = require('../exact/contact');
 
-describe('exact', function() {
+describe('exact - connection', function() {
 
   describe('general', () => {
     it('division', async() => {
@@ -31,7 +32,7 @@ describe('exact', function() {
       assert.isDefined(contacts[0].ID);
       assert.isTrue(contacts[0] !== null);
       assert.isTrue(typeof contacts[0].ID === 'string');
-      assert.isTrue(contacts[0].ID.length > 0)
+      assert.isTrue(contacts[0].ID.length > 0);
       id = contacts[0].ID;
       name = contacts[0].LastName;
       account = contacts[0].Account;
@@ -95,3 +96,17 @@ describe('exact', function() {
     });
   })
 });
+
+//
+// describe('exact - contact', async () => {
+//   let ACCOUNT = 'a2fce85c-0086-440e-bc01-36eb89346b9f';
+//
+//   let ContactModel = new Contact();
+//   let johnId = await ContactModel.create({FirstName: 'Joe', LastName: 'Master', Account: ACCOUNT});
+//   assert.equal(typeof johnId, 'string');
+//
+//   let john = await ContactModel.findById(johnId);
+//   assert.equal(john.LastName, 'Master');
+//
+//   await ContactModel.delete(johnId);
+// });

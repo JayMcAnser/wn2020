@@ -8,6 +8,8 @@ const assert = chai.assert;
 const Distribution = require('../model/distribution');
 const Contact = require('../model/contact');
 const Art = require('../model/art');
+const Session = require('../lib/session');
+const Util = require('../lib/util');
 
 
 describe('model.distribution', () => {
@@ -16,9 +18,11 @@ describe('model.distribution', () => {
   let objAddr;
   let dist;
   let art;
+  let session;
 
   before( () => {
     return Distribution.deleteMany({}).then( async () => {
+      session = new Session('distribution');
       contact1 = await Contact.findOne({addressId: 1});
       if (!contact1) {
         contact1 = Contact.create({addressId: 1, name: 'test 1'});
@@ -31,26 +35,32 @@ describe('model.distribution', () => {
 
   describe('crud', () => {
     it('create', async() => {
-      distr = Distribution.create({locationId: 1, code: '2000-0001'});
+      distr = Distribution.create(session, {locationId: 1, code: '2000-0001'});
       assert.equal(contact1.name, contact1.name);
-      distr.objectSet({contact: contact1});
+      distr.contact = contact1;
       await distr.save();
 
-      distr = await Distribution.findOne({locationId: 1});
-      let obj = distr.objectGet();
-      assert.equal(obj.code, '2000-0001');
+      distr = await Distribution.queryOne(session, {locationId: 1});
+      assert.equal(distr.code, '2000-0001');
     });
 
     it('related', async () => {
+      Util.QuerySession();
       distr = await Distribution.findOne({locationId: 1});
-      obj = distr.objectGet();
-      assert.equal(obj.code, '2000-0001');
-      assert.equal(obj.contact.toString(), contact1.id.toString());
+      assert.equal(distr.code, '2000-0001');
+      assert.equal(distr.contact.toString(), contact1.id.toString());
+
+      // because of the populate we can NOT use the session in the query.
+      // if we want to use it anyway we have to use the session method on the record to set the values
 
       distr = await Distribution.findOne({locationId: 1})
-        .populate('_fields.related');
-      obj = distr.objectGet();
-      assert.equal(obj.contact.name, objAddr.name);
+        .populate('contact');
+      distr.session(session);
+
+      assert.equal(distr.contact.addressId, 1);
+      assert.equal(distr.__user, session.name)
+      distr.code = '2001-0002';
+      await distr.save();
     });
 
     it('line - add', async() => {
@@ -71,18 +81,14 @@ describe('model.distribution', () => {
       distr = await Distribution.findOne({locationId: 1});
       assert.equal(distr.line.length, 1);
       assert.equal(distr.line[0].art.toString(), art.id.toString());
-      let obj = distr.objectGet();
-      assert.equal(obj.line.length, 1);
 
       // include the artwork
       distr = await Distribution.findOne({locationId: 1})
         .populate('line.art');
       assert.equal(distr.line.length, 1);
       assert.equal(distr.line[0].art.artId, '200');
-      obj = distr.objectGet();
-      assert.equal(obj.line.length, 1);
-      assert.equal(obj.line[0].art.artId, '200', 'native field');
-      assert.equal(obj.line[0].art.title, 'dis.art 1', 'flex field');
+      assert.equal(distr.line.length, 1);
+      assert.equal(distr.line[0].art.artId, '200', 'native field');
     });
 
     it('line - update', async() => {
@@ -90,15 +96,13 @@ describe('model.distribution', () => {
       distr.lineUpdate(0, {price: '100'});
       await distr.save();
       distr = await Distribution.findOne({locationId: 1});
-      let obj = distr.objectGet();
-      assert.equal(obj.line[0].price, '100');
+      assert.equal(distr.line[0].price, '100');
 
       // remove property
       distr.lineUpdate(0, {price: undefined});
       await distr.save();
       distr = await Distribution.findOne({locationId: 1});
-      obj = distr.objectGet();
-      assert.isUndefined(obj.line[0].price);
+      assert.isUndefined(distr.line[0].price);
 
       assert.throws( () => { distr.lineUpdate(99, {price: undefined}); }, 'not found')
     });
@@ -119,7 +123,7 @@ describe('model.distribution', () => {
     let distr;
 
     before(async () => {
-      distr = Distribution.create({locationId: 2, code: '2000-0002'});
+      distr = Distribution.create(session, {locationId: 2, code: '2000-0002'});
       art1 = await Art.findOne({artId: '201'});
       if (!art1) {
         art1 = Art.create({artId: '201', title: 'dis.art 2'});
@@ -141,21 +145,18 @@ describe('model.distribution', () => {
     it('add one line', async () => {
       distr.lineAdd({art: art1, price: 100});
       await distr.save();
-      let obj = distr.objectGet();
-      assert.equal(obj.line.length, 1);
-      assert.equal(obj.line[0].price, 100);
-      assert.equal(obj.subTotalCosts, 100);
+      assert.equal(distr.line.length, 1);
+      assert.equal(distr.line[0].price, 100);
+      assert.equal(distr.subTotalCosts, 100);
 
       distr.lineAdd({art: art2, price: 200});
       await distr.save();
-      obj = distr.objectGet();
-      assert.equal(obj.line.length, 2);
-      assert.equal(obj.subTotalCosts, 300);
+      assert.equal(distr.line.length, 2);
+      assert.equal(distr.subTotalCosts, 300);
 
-      distr.objectSet({productionCosts: 400});
+      distr.productionCosts = 400;
       await distr.save();
-      obj = distr.objectGet();
-      assert.equal(obj.totalCosts, 700);
+      assert.equal(distr.totalCosts, 700);
     });
   });
 
@@ -164,9 +165,9 @@ describe('model.distribution', () => {
     let distr;
 
     before(async () => {
-      distr = Distribution.create({locationId: 3, code: '2000-0003'});
+      distr = Distribution.create(session, {locationId: 3, code: '2000-0003'});
       await distr.save();
-      distr = await Distribution.findOne({locationId: 3})
+      distr = await Distribution.queryOne(session, {locationId: 3})
       art1 = await Art.findOne({artId: '201'});
       if (!art1) {
         art1 = Art.create({artId: '201', title: 'dis.art 2'});
@@ -177,12 +178,12 @@ describe('model.distribution', () => {
       }
     });
     it('set address', async () => {
-      distr.objectSet({contact: contact1});
+      distr.contact = contact1;
       await distr.save();
-      distr = await Distribution.findOne({locationId: 3});
-      obj = distr.objectGet();
-      assert.isDefined(obj.invoice);
-      assert.isDefined(obj.contact);
+      distr = await Distribution.queryOne(session, {locationId: 3});
+      assert.isDefined(distr);
+      assert.isDefined(distr.invoice);
+      assert.isDefined(distr.contact);
     })
   })
 });

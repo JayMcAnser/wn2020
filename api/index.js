@@ -7,7 +7,7 @@ const server = require('./lib/server');
 const MongoDb = require('./lib/db-mongo');
 const UserObject = require('./lib/user');
 const HapiAuth = require('hapi-plugin-auth');
-const Exact = require('./exact');
+//const Exact = require('./exact');
 const Logger = require('./lib/logging');
 // const Sessions = require('./lib/sessions');
 
