@@ -1,190 +1,124 @@
 /**
- * A flexable art model where the field can be define on-the-fly
+ * A  art model
+ * v: 0.2 2020-05-06
+ *
+ * Agent rules:
+ *   - agentAdd(agent | data.agent), agentUpdate(index | ObjectId, data), agentRemove(index| ObjectId)
+ *   - unique
+ *     * the agent must be unique. If duplicate is created the new one replaces the old one
+ *
+ *   - creator
+ *     * only one agent can be creator
+ *     * if none is creator, index=0 is primary if not ROLE_SUBJECT
+ *     * if more then 1 primary, latest creator set will become creator
+ *     * creatorAgent is a virtual into the agent array
+ *
+ *  - royalties
+ *     * total is always 100 (%)
+ *     * 100 - (the sum of the not primary) is the royalties for the primary
+ *     * if primary.royalties < 0 throw an error and no save
+ *     * can be set in one call by setRoyalties[{_id, royaltiesPerc}, {_id, royaltiesPerc}] where primary can be missing
+ *     * royaltiesValid checkes if all percentages are ok
  *
  */
 const Mongoose = require('../lib/db-mongo');
 const Schema = Mongoose.Schema;
-const FlexModel = require('./flex-model-helper');
-const FieldSchema = require('./flex-model-helper').FieldSchema;
-const Contact = require('./contact');
-const CodeFieldMap = require('./code').ShortFieldMap;
-const ArtistFieldMape = require('./agent').FieldMap;
 const ErrorTypes = require('error-types');
-
-
+const UndoHelper = require('mongoose-undo');
+const Logging = require('../lib/logging');
 const ROLE_CREATOR = 'creator';
 const ROLE_CONTRIBUTOR = 'contributor';
 const ROLE_SUBJECT = 'sublect';
-/**
- * do NOT start a field with _. It will be skipped in the get
- * @type {{def: {type: StringConstructor, required: boolean}, text: StringConstructor}}
- */
-const FieldMap = {
-  type: {type: 'string', name: 'type', group: 'general'},
-  searchcode: {type: 'string', name: 'searchcode', group: 'general'},
-  title: {type: 'string', name: 'title', group: 'general'},
-  titleEn: {type: 'string', name: 'titleEn', group: 'general'},
-  comments: {type: 'string', name: 'comments', group: 'general'},
-  sortOn: {type: 'string', name: 'sortOn', group: 'general'},
-  isPartOfCollection: {type: 'boolean', name: 'isPartOfCollection', group: 'general'},
-  yearFrom: {type: 'string', name: 'yearFrom', group: 'general'},
-  yearTill: {type: 'string', name: 'yearTill', group: 'general'},
-  period: {
-    type: 'string', name: 'period', group: 'general', getValue: (rec) => {
-      let s = `${rec.yearFrom ? rec.yearFrom : ''}${rec.yearFrom !== undefined && rec.yearTill !== undefined ? ' - ' : ''}${rec.yearTill ? rec.yearTill : ''}`
-      return s.length ? s : undefined
-    }
-  },
 
-  length: {type: 'string', name: 'length', group: 'general'},
-  descriptionNl: {type: 'string', name: 'description', group: 'general'},
-  description: {type: 'string', name: 'description', group: 'general'},
-  hasSound: {type: 'boolean', name: 'hasSound', group: 'general'},
-  audio: {type: 'string', name: 'audio', group: 'general'},
-  credits: {type: 'string', name: 'credits', group: 'general'},
 
-  playback: {type: 'string', name: 'playback', group: 'presentation'},
-  monitors: {type: 'string', name: 'monitors', group: 'presentation'},
-  projectors: {type: 'string', name: 'projectors', group: 'presentation'},
-  amplifierSpeaker: {type: 'string', name: 'amplifier/speaker', group: 'presentation'},
-  installation: {type: 'boolean', name: 'installation', group: 'presentation'},
-  monitor: {type: 'boolean', name: 'monitor', group: 'presentation'},
-  projection: {type: 'boolean', name: 'projection', group: 'presentation'},
-  carriers: {type: 'string', name: 'carriers', group: 'presentation'},
-  objects: {type: 'string', name: 'objects', group: 'presentation'},
-
-  royaltiesError: {type: 'string', name: 'royalties error', group: 'errors'},
-
-  artist: {type: 'string', name: 'artist', group: 'general',
-    getValue: (rec) => {
-      if (rec.agents && rec.agents.length) {
-        for (let l = 0; l < rec.agents.length; l++) {
-          if (rec.agents[l].role === ROLE_CREATOR) {
-            return rec.agents[l].artist;
-          }
-        }
-        return rec.agents[0].artist;
-      }
-      return undefined
-    },
-    setValue: () => undefined
-  },
-
-  //
-  // owner: {type: 'address', name: 'owner', group: 'testing'},
-  // also: {type: 'related', model: 'Contact', name: 'also', group: 'testing'},
-};
-
-const AgentFieldMap = {
-  comments: {type: 'string', name: 'comments', group: 'general'},
-
-};
-
-const ArtistSchema = {
-  artist: {
+const ArtistSchema = new Schema({
+  agent: {
     type: Schema.ObjectId,
     ref: 'Agent'
   },
   role: String,
   percentage: Number,
-  _fields: [FieldSchema],
-};
+  comments: String
+});
 
-const ArtModelSchema = {
+const ArtLayout = {
   artId: String,
-  _fields: [FieldSchema],
+  type: String,
+  searchcode:  String,
+  title: String,
+  titleEn: String,
+  comments: String,
+  sortOn: String,
+  isPartOfCollection: Boolean,
+  yearFrom: String,
+  yearTill: String,
+  // period: {
+  //   type: 'string', name: 'period', group: 'general', getValue: (rec) => {
+  //     let s = `${rec.yearFrom ? rec.yearFrom : ''}${rec.yearFrom !== undefined && rec.yearTill !== undefined ? ' - ' : ''}${rec.yearTill ? rec.yearTill : ''}`
+  //     return s.length ? s : undefined
+  //   }
+  // },
+  length: String,
+  descriptionNl: String,
+  description: String,
+  hasSound: Boolean,
+  audio: String,
+  credits: String,
+
+  playback: String,
+  monitors: String,
+  projectors: String,
+  amplifierSpeaker: String,
+  installation: Boolean,
+  monitor: Boolean,
+  projection: Boolean,
+  carriers: String,
+  objects: String,
+  royaltiesError: String,
+
+  // artist: {type: 'string', name: 'artist', group: 'general',
+  //   getValue: (rec) => {
+  //     if (rec.agents && rec.agents.length) {
+  //       for (let l = 0; l < rec.agents.length; l++) {
+  //         if (rec.agents[l].role === ROLE_CREATOR) {
+  //           return rec.agents[l].artist;
+  //         }
+  //       }
+  //       return rec.agents[0].artist;
+  //     }
+  //     return undefined
+  //   },
+  //   setValue: () => undefined
+  // },
+
+  //
+  // owner: {type: 'address', name: 'owner', group: 'testing'},
+  // also: {type: 'related', model: 'Contact', name: 'also', group: 'testing'},
+
   codes: [{
     type: Schema.ObjectId,
     ref: 'Code'
   }],
   agents: [ArtistSchema],
   urls: [String],
+  created: UndoHelper.createSchema
 };
 
-let ArtModel = new Schema(ArtModelSchema);
+let ArtSchema = new Schema(ArtLayout);
 
-/**
- * create a new ArtFlex.
- * Record fields can not be stored!
- * @param fields
- * @return {Promise|void|*}
- */
-ArtModel.statics.create = function(fields) {
-  return FlexModel.create('Art', fields)
-};
+ArtSchema.plugin(UndoHelper.plugin);
 
 
-ArtModel.statics.relations = function() {
-  return {
-    '/urls': {},
-    '/codes': CodeFieldMap,
-    '/agents': AgentFieldMap,
-    '/agents/artist': ArtistFieldMape,
-  }
-};
-/**
- * store an object in the field definition
- * @param data
- */
-ArtModel.methods.objectSet = function(data) {
-  return FlexModel.objectSet(this, FieldMap, data);
-};
-
-/**
- * create an object from the stored record
- *
- * @param fieldNames Array optional list of fields to store
- * @return {{}}
- */
-ArtModel.methods.objectGet = function(fieldNames = []) {
-  return FlexModel.objectGet(this, FieldMap, fieldNames);
-};
-
-/**
- * takes care that only one artist is primary and that the
- * total of the percentage === 100
- *
- * @param vm
- * @param currentData
- * @private
- */
-_artistPrimary = function(vm, currentData) {
-  if (vm.agents.length === 0) {
-    return;
-  }
-  if (currentData && currentData.artist) {
-    let currentId = currentData.artist._id ? currentData.artist._id.toString() : currentData.artist;
-    if (currentData.role === ROLE_CREATOR) {
-      for (let l = 0; l < vm.agents.length; l++) {
-        let artist = vm.agents[l];
-        if (currentId !== artist.artist._id.toString()) {
-          if (artist.role === ROLE_CREATOR) {
-            artist.role = ROLE_CONTRIBUTOR;
-            artist.percentage = 0;
-            changed = true;
-          } // else no change
-        } // else no change
-      }
-    }
-  }
-  // calc percentage
-  // the primary artist always get the rest. So giving a member 10% will lower the primary to 90%
-  let perc = 0;
-  let primIndex = 0;
-  for (let l = 0; l < vm.agents.length; l++) {
-    let artist = vm.agents[l];
-    if (artist.role === ROLE_CREATOR) {
-      primIndex = l;
+ArtSchema.virtual('creatorIndex')
+  .get(function() {
+    if (this.agents.length === 0) {
+      return -1
     } else {
-      perc += artist.percentage ? artist.percentage : 0;
+      return this.agents.findIndex( (x) => x.role === ROLE_CREATOR);
     }
-  }
-  if (perc > 100) {
-    vm._fields.push({def:'royaltiesError', string: 'royalties are more the 100%'});
-  }
-  vm.agents[primIndex].percentage = (100 - perc) + (vm.agents[primIndex].percentage ? vm.agents[primIndex].percentage : 0);
+  });
 
-};
+
 
 /**
  * find the index in the agents array by the index or by the _id
@@ -205,49 +139,156 @@ _agentIdToIndex = function(vm, id) {
   return ind;
 };
 
-ArtModel.methods.agentAdd = function(data) {
-  let dataRec = {_fields: []};
-  this.objectSet({royaltiesError: undefined});
-  FlexModel.objectSet(dataRec, AgentFieldMap, data);
-  this.agents.push(dataRec);
-  _artistPrimary(this, data);
-};
-
-ArtModel.methods.agentUpdate = function(id, data = false) {
-  this.objectSet({royaltiesError: undefined});
-  let ind = _agentIdToIndex(this, id);
-  if (ind < this.agents.length) {
-    if (Object.keys(data).length === 0) {
-      this.agents.splice(ind, 1);
-      _artistPrimary(this);
-    } else {
-      FlexModel.objectSet(this.agents[ind], AgentFieldMap, data);
-      let dataObj = FlexModel.objectGet(this.agents[ind], AgentFieldMap);
-      _artistPrimary(this, dataObj);
+/**
+ * find an agent in the array.
+ * @param agentId ObjectId
+ * @return {boolean|number} the index or false
+ * @private
+ */
+ArtSchema.methods._indexOfAgent = function(agentId) {
+  if (this._agents && this._agents.length) {
+    for (let l = 0; l < this._agents.length; l++) {
+      if (agentId.toString() === this._agents._id.toString()) {
+        return l;
+      }
     }
+  }
+  return false;
+}
 
+/**
+ * forces that there is alway one and only one creator
+ * @param index
+ * @param isCreator
+ * @private
+ */
+ArtSchema.methods._setCreator = function(index, isCreator) {
+  let didDefine = false;
+  for (let l = 0; l < this.agents.length; l++) {
+    if (this.agents[l].role === ROLE_CREATOR && l !== index && isCreator) {
+      // reset the current creator because we have a new one
+      if (this.agents[l].role === ROLE_CREATOR) {
+        this.agents[l].percentage = 0;
+      }
+      this.agents[l].role = ROLE_CONTRIBUTOR;
+    } else if(l === index && isCreator || this.agents[l].role === ROLE_CREATOR) {
+      // we have a create defined
+      didDefine = true;
+    }
+  }
+  if (!didDefine && this.agents.length) {
+    this.agents[0].role = ROLE_CREATOR;
+  }
+}
+
+/**
+ * set the royalties for the primary artist depending on the percentage the other ar getting
+ * @param data Array of { _id, royalties}
+ */
+ArtSchema.methods.setRoyalties = function(data) {
+  let creatorIndex = false;
+  let perc = 0;
+  let agentIndex;
+
+  for (let l = 0; l < data.length; l++) {
+    agentIndex = this.agents.findIndex( (a) => a._id.toString() === data[l]._id.toString());
+    if (agentIndex >= 0) {
+      if (this.agents[agentIndex].role === ROLE_CREATOR) {
+        creatorIndex = agentIndex
+      } else {
+        perc += this.agents[agentIndex].percentage;
+      }
+    } else {
+      Logging.warn(`art.id ${this._id.toString()}: the _id ${data[l]._id.toString()} was not found in the agents array.`);
+    }
+  }
+  if (perc < 0 || perc > 100) {
+    throw new ErrorTypes.ErrorFieldNotValid(`the total of the royalties percentages (${perc}%) is more the 100%`, false);
+  } else if (creatorIndex === false) {
+    creatorIndex = this.agents.findIndex((a) => a.role === ROLE_CREATOR)
+  }
+  if (creatorIndex === false) {
+    Logging.error(`no creator found in ${this._id.toString()}`)
   } else {
-    throw new ErrorTypes.ErrorNotFound('agent index not found');
+    this.agents[creatorIndex].percentage = 100 - perc;
+  }
+}
+
+/**
+ * add an agent to this art.
+ * @param data Agent or data rec
+ */
+ArtSchema.methods.agentAdd = function(data) {
+  let dataRec;
+  if (data.agent) {
+    dataRec = data;
+  } else {
+    dataRec = {agent: data._id}
+  }
+  let index = this._indexOfAgent(dataRec.agent._id);
+  if (index !== false) {
+    // it's an update because we replace the agent
+    this.agentUpdate(index, dataRec);
+  } else {
+    if (!dataRec.role) {
+      dataRec.role = this.agents.length ? ROLE_CONTRIBUTOR : ROLE_CREATOR;
+    }
+    index = this.agents.length;
+    this.agents.push(dataRec);
+    this._setCreator(index, data.role === ROLE_CREATOR)
+    this.setRoyalties(this.agents);
   }
 };
 
 /**
- * the search is  {yearFrom: '1999'}
- * should become: {'_fields.string' : '1999', '_fields.def' : 'yearFrom'}
+ * update an agent record
+ *
+ * @param id ObjectId / number / data record
+ * @param data Object
  */
-ArtModel.statics.findField = function(search = {}) {
-  let qry = {};
-  for (let key in search) {
-    if (!search.hasOwnProperty(key)) { continue }
-    qry['_fields.' + FieldMap[key].type] = search[key];
-    qry['_fields.def'] = key;
+ArtSchema.methods.agentUpdate = function(id, data) {
+  if (data === undefined) {
+    data = id;
+    id = data._id;
   }
-  let  f= this.find(qry);
-  return this.find(qry);
+  let index;
+  if (typeof id === 'object') {
+    index = this.agents.findIndex( (x) => x._id.toString() === id.toString())
+  } else {
+    index = id;
+  }
+  if (index >= 0 && index < this.agents.length) {
+    Object.assign(this.agents[index], data);
+    this._setCreator(index, this.agents[index].role === ROLE_CREATOR);
+    this.setRoyalties(this.agents);
+  } else {
+    throw new ErrorTypes.ErrorDocumentNotFound(`art.agent: ${id.toString()} not found`);
+  }
 };
 
-module.exports = Mongoose.Model('Art', ArtModel);
-module.exports.FieldMap = FieldMap;
+/**
+ * remove agent from the list
+ *
+ * @param id: ObjectId | Number
+ */
+
+ArtSchema.methods.agentRemove = function(id) {
+  let index;
+  if (typeof id === 'object') {
+    index = this.agents.findIndex( (x) => x._id.toString() === id.toString())
+  } else {
+    index = id;
+  }
+  if (index >= 0 && index < this.agents.length) {
+    this.agents.splice(index, 1);
+    this._setCreator(-1, false);
+    this.setRoyalties(this.agents);
+  } else {
+    throw new ErrorTypes.ErrorDocumentNotFound(`art.agent: ${id.toString()} not found`);
+  }
+}
+
+module.exports = Mongoose.Model('Art', ArtSchema);
 module.exports.ROLE_CREATOR = ROLE_CREATOR;
 module.exports.ROLE_CONTRIBUTOR = ROLE_CONTRIBUTOR;
 module.exports.ROLE_SUBJECT = ROLE_SUBJECT;

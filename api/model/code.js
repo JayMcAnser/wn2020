@@ -12,7 +12,7 @@ const _ = require('lodash');
 
 
 const CodeSchema = {
-  guid: {type: 'string', required: true},
+  guid: {type: 'string', required: false},
   created: UndoHelper.createSchema,
   // the id on the old WatsNext
   codeId: {type: Number},

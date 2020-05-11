@@ -9,6 +9,8 @@ const Contact = require('../model/contact');
 const Carrier = require('../model/carrier');
 const Config = require('config');
 const Logging = require('./logging');
+const Session = require('./session');
+const ErrorTypes = require('error-types');
 
 class Setup {
 
@@ -72,20 +74,21 @@ class Setup {
   async createContact() {
     let contact = await Contact.findOne({guid: 'DISTR_NOT_FOUND'});
     if (!contact) {
-      contact = await Contact.create({addressId: -1, guid: 'DISTR_NOT_FOUND', name: 'Distribution contact not found'})
+      contact = await Contact.create(new Session('disti_not_found'), {addressId: -1, guid: 'DISTR_NOT_FOUND', name: 'Distribution contact not found'})
       await contact.save();
     }
     return true;
   }
 
   async createCarrier() {
-    let carrier = await Carrier.findField({locationNumber: 'CARRIER_NOT_FOUND'});
-    if (carrier.length === 0) {
-      carrier = await Carrier.create({carrierId: -1, locationNumber: 'CARRIER_NOT_FOUND', comments: 'Carrier not found by importer'})
+    let session = new Session('setup')
+    let carrier = await Carrier.queryOne(session, {locationNumber: 'CARRIER_NOT_FOUND'});
+    if (!carrier) {
+      carrier = await Carrier.create(session, {carrierId: -1, locationNumber: 'CARRIER_NOT_FOUND', comments: 'Carrier not found by importer'})
       await carrier.save()
-      let c = await Carrier.findField({locationNumber: 'CARRIER_NOT_FOUND'});
-      if (c.length === 0) {
-        throw new ErrorNotFound('could not find CARRIER_NOT_FOUND');
+      let c = await Carrier.queryOne(session,{locationNumber: 'CARRIER_NOT_FOUND'});
+      if (!c) {
+        throw new ErrorTypes.ErrorNotFound('could not find/create carrier with locationNumber: CARRIER_NOT_FOUND');
       }
     }
     return true;

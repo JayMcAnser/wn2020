@@ -7,10 +7,15 @@ const chai = require('chai');
 const assert = chai.assert;
 const Contact = require('../model/contact');
 const Setup = require('../lib/setup');
+const Session = require('../lib/session');
+
 
 describe('model.contact', () => {
+  let session;
+
   before( () => {
     return Contact.deleteMany({}).then(() => {
+      session = new Session(('contact'))
       let setup = new Setup();
       return setup.run();
     });
@@ -20,39 +25,36 @@ describe('model.contact', () => {
     let cnt;
     let workId;
 
-    before( () => {
-      cnt = Contact.create({addressId: 1, name: 'test 1'});
+    before( async () => {
+      cnt = await Contact.create(session, {addressId: 1, name: 'test 1'});
+      return cnt.save();
     });
 
     it('add address', async() => {
-      cnt.addressAdd({usage: 'work', street: 'Weststreet',number: '1', zipcode: '1017TE', city: 'Amsterdam'})
+      cnt.locationAdd({usage: 'work', street: 'Weststreet',number: '1', zipcode: '1017TE', city: 'Amsterdam'})
       cnt = await cnt.save();
-      cnt = await Contact.findOne({addressId : 1});
-      let obj = cnt.objectGet();
-      assert.equal(obj.addresses.length, 1);
-      assert.equal(obj.addresses[0].usage, 'work');
-      assert.equal(obj.addresses[0].zipcode,  '1017TE');
-      workId = obj.addresses[0].id;
+      cnt = await Contact.queryOne(session,{addressId : 1});
+      assert.equal(cnt.location.length, 1);
+      assert.equal(cnt.location[0].usage, 'work');
+      assert.equal(cnt.location[0].zipcode,  '1017TE');
+      workId = cnt.location[0].id;
       assert.isDefined(workId)
     });
 
     it('update an address', async() => {
-      cnt.addressUpdate(workId, {usage: 'work', street: 'Weststreet',number: '1', zipcode: '1089TE', city: 'Amsterdam'})
+      cnt.locationUpdate(workId, {usage: 'work', street: 'Weststreet',number: '1', zipcode: '1089TE', city: 'Amsterdam'})
       cnt = await cnt.save();
-      cnt = await Contact.findOne({addressId : 1});
-      let obj = cnt.objectGet();
-      assert.equal(obj.addresses.length, 1);
-      assert.equal(obj.addresses[0].zipcode,  '1089TE');
+      cnt = await Contact.queryOne(session,{addressId : 1});
+      assert.equal(cnt.location.length, 1);
+      assert.equal(cnt.location[0].zipcode,  '1089TE');
     });
 
     it('delete', async() => {
-     cnt.addressUpdate(workId);
+     cnt.locationUpdate(workId);
       cnt = await cnt.save();
-      cnt = await Contact.findOne({addressId : 1});
-      let obj = cnt.objectGet();
-      assert.isUndefined(obj.addresses);
+      cnt = await Contact.queryOne(session,{addressId : 1});
+      assert.equal(cnt.location.length, 0);
     })
-
   })
   // describe('crud', () => {
   //   it('create', () => {
