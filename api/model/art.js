@@ -76,31 +76,14 @@ const ArtLayout = {
   objects: String,
   royaltiesError: String,
 
-  // artist: {type: 'string', name: 'artist', group: 'general',
-  //   getValue: (rec) => {
-  //     if (rec.agents && rec.agents.length) {
-  //       for (let l = 0; l < rec.agents.length; l++) {
-  //         if (rec.agents[l].role === ROLE_CREATOR) {
-  //           return rec.agents[l].artist;
-  //         }
-  //       }
-  //       return rec.agents[0].artist;
-  //     }
-  //     return undefined
-  //   },
-  //   setValue: () => undefined
-  // },
-
-  //
-  // owner: {type: 'address', name: 'owner', group: 'testing'},
-  // also: {type: 'related', model: 'Contact', name: 'also', group: 'testing'},
-
   codes: [{
     type: Schema.ObjectId,
     ref: 'Code'
   }],
   agents: [ArtistSchema],
-  urls: [String],
+  urls: [
+    {type: String}
+  ],
   created: UndoHelper.createSchema
 };
 
@@ -286,7 +269,31 @@ ArtSchema.methods.agentRemove = function(id) {
   } else {
     throw new ErrorTypes.ErrorDocumentNotFound(`art.agent: ${id.toString()} not found`);
   }
+};
+
+ArtSchema.methods.urlAdd = function(url) {
+  if (this.urls.findIndex( (x) => { return x === url }) <0 ) {
+    this.urls.push(url)
+  }
 }
+ArtSchema.methods.urlRemove = function(url) {
+  let index = this.urls.findIndex( (x) => { return x === url });
+  if (index >= 0) {
+    this.urls.splice(index, 1);
+  }
+}
+/**
+ * set the array in one stroke
+ * see: https://medium.com/@alvaro.saburido/set-theory-for-arrays-in-es6-eb2f20a61848
+ * @param urls
+ */
+ArtSchema.methods.urlSet = function(urls) {
+  let vm = this;
+  urls.filter(x => !vm.urls.includes(x)).map((x) => { vm.urlAdd(x) });
+  vm.urls.filter(x => !urls.includes(x)).map( (x) => { vm.urlRemove(x)});
+}
+
+
 
 module.exports = Mongoose.Model('Art', ArtSchema);
 module.exports.ROLE_CREATOR = ROLE_CREATOR;

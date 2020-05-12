@@ -176,13 +176,30 @@ describe('model.art', () => {
 
   describe('url', () => {
     it('accept url', async() => {
-      art.urls.push('www.test.com');
+      art.urlAdd('www.test.com');
       await art.save();
       art = await Art.findOne({artId: art.artId});
-      let obj = art.objectGet();
-      assert.isDefined(obj.urls);
-      assert.equal(obj.urls.length, 1);
-      assert.equal(obj.urls[0], 'www.test.com');
+      assert.isDefined(art.urls);
+      assert.equal(art.urls.length, 1);
+      assert.equal(art.urls[0], 'www.test.com');
+    });
+    it('test unique', () => {
+      assert.isDefined(art.urls);
+      assert.equal(art.urls.length, 1);
+      art.urlAdd('www.test.com');
+      assert.equal(art.urls.length, 1, 'did not change');
+    });
+
+    it('update at once', () => {
+      art.urlAdd('example.com');
+      art.urlSet(['example.com', 'none.com']);
+      assert.equal(art.urls.length, 2)
+      assert.isTrue(art.urls.indexOf('example.com') >= 0);
+      assert.isTrue(art.urls.indexOf('www.test.com') < 0);
     })
+  });
+
+  describe('code', () => {
+
   })
 });
