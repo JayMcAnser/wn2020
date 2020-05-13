@@ -4,102 +4,144 @@
  */
 const Mongoose = require('../lib/db-mongo');
 const Schema = Mongoose.Schema;
-const FlexModel = require('./flex-model-helper');
-const FieldSchema = require('./flex-model-helper').FieldSchema;
-const Contact = require('./contact');
-const CodeFieldMap = require('./code').ShortFieldMap;
-const _ = require('lodash');
+const UndoHelper = require('mongoose-undo');
 
-/**
- * do NOT start a field with _. It will be skipped in the get
- */
-const FieldMap = {
-  type: {type: 'string', name: 'type', group: 'general'},
-  searchcode: {type: 'string', name: 'searchcode', group: 'general'},
-  contact: {type: 'related', model: 'Contact', name: 'contact', group: 'general', getValue: (rec, mongoRec) => {
-      if (rec.contactRights === undefined) {
-        rec.contactRights = _.cloneDeep(rec.contact);
-      }
-      if (rec.artistAddress === undefined) {
-        rec.artistAddress = _.cloneDeep(rec.contact)
-      }
-      return this.contact;
-    }},
-  contactRights: {type: 'related', model: 'Contact', name: 'contact rights', group: 'general'},
-  artistAddress: {type: 'related', model: 'Contact', name: 'artist address', group: 'general'},
-  name: {type: 'string', name: 'type', group: 'general'},
-  sortOn: {type: 'string', name: 'sort on', group: 'general'},
-  died: {type: 'string', name: 'died', group: 'general'},
-  biography: {type: 'string', name: 'biography', group: 'general'},
-  biographyNl: {type: 'string', name: 'biography nl', group: 'general'},
-  comments: {type: 'string', name: 'comments', group: 'general'},
-  born: {type: 'string', name: 'born', group: 'general'},
-  bornInCountry: {type: 'string', name: 'born in country', group: 'general'},
-  customerNr: {type: 'string', name: 'customer number', group: 'finance'},
-  percentage: {type: 'number', name: 'percentage', group: 'finance'}
-};
+const ContactSchema = new Schema({
+  contact: {
+    type: Schema.Types.ObjectId,
+    ref: 'Contact'
+  },
+  isRights : Boolean,
+  isContact: Boolean,
+  isArtist: Boolean,
+})
 
-
-const AgentModelSchema = {
+const AgentLayout = {
   agentId: String,
-  _fields: [FieldSchema],
+  type: String,
+  searchcode:  String,
+  name: String,
+  sortOn: String,
+  died: String,
+  biography: String,
+  biographyNl: String,
+  comments: String,
+  born: String,
+  bornInCountry: String,
+  customerNr: String,
+  percentage: {type: Number},
+  contacts: [
+    ContactSchema
+  ],
   codes: [{
     type: Schema.ObjectId,
     ref: 'Code'
   }]
 };
 
-let AgentModel = new Schema(AgentModelSchema);
+let AgentSchema = new Schema(AgentLayout);
+AgentSchema.plugin(UndoHelper.plugin);
+
+AgentSchema.virtual('contact')
+  .get(function() {
+    if (this.contacts.length) {
+      let index = this.contacts.findIndex( (a) => { return a.isContact})
+      if (index < 0) {
+        return this.contacts[0].contact
+      }
+      return this.contacts[index].contact
+    }
+    return undefined;
+  })
+AgentSchema.virtual('contactRights')
+  .get(function() {
+    if (this.contacts.length) {
+      let index = this.contacts.findIndex( (a) => { return a.isRights})
+      if (index < 0) {
+        index = this.contacts.findIndex( (a) => { return a.isContact})
+        if (index < 0) {
+          return this.contacts[0].contact;
+        }
+      }
+      return this.contacts[index].contact;
+    }
+    return undefined;
+  })
+AgentSchema.virtual('contactArtist')
+  .get(function() {
+    if (this.contacts.length) {
+      let index = this.contacts.findIndex( (a) => { return a.isArtist})
+      if (index < 0) {
+        return this.contact[0].contact
+      }
+      return this.contacts[index].contact
+    }
+    return undefined;
+  })
+
 
 /**
- * create a new Agent
- * Record fields can not be stored!
- * @param fields
- * @return {Promise|void|*}
+ * add a contact to the contacts.
+ * @param contact
+ * @param usage String 'contact' | 'rights' | 'artist'
  */
-AgentModel.statics.create = function(fields) {
-  return FlexModel.create('Agent', fields)
-};
-
-
-AgentModel.statics.relations = function() {
-  return {
-    '/codes': CodeFieldMap
+AgentSchema.methods.contactAdd = function(contact, usage) {
+  let index = this.contacts.findIndex( (a) => { return a.contact._id.toString() === contact._id.toString()})
+  if (index < 0) {
+    index = this.contacts.length;
+    this.contacts.push({contact: contact})
   }
-};
-/**
- * store an object in the field definition
- * @param data
- */
-AgentModel.methods.objectSet = function(data) {
-  return FlexModel.objectSet(this, FieldMap, data);
-};
+  this.contacts[index].isRights = usage && usage.indexOf('rights') >= 0;
+  this.contacts[index].isArtist = usage && usage.indexOf('artist') >= 0;
+  this.contacts[index].isContact = usage && usage.indexOf('contact') >= 0;
+}
 
-/**
- * create an object from the stored record
- *
- * @param fieldNames Array optional list of fields to store
- * @return {{}}
- */
-AgentModel.methods.objectGet = function(fieldNames = []) {
-  return FlexModel.objectGet(this, FieldMap, fieldNames);
-};
-
-/**
- * the search is  {yearFrom: '1999'}
- * should become: {'_fields.string' : '1999', '_fields.def' : 'yearFrom'}
- */
-
-AgentModel.statics.findField = function(search = {}) {
-  let qry = {};
-  for (let key in search) {
-    if (!search.hasOwnProperty(key)) { continue }
-    qry['_fields.' + FieldMap[key].type] = search[key];
-    qry['_fields.def'] = key;
+AgentSchema.methods.contactRemove = function(index) {
+  if (typeof index === 'object') {
+    index = this.contacts.findIndex( (a) => { return a.contact._id.toString() === contact._id.toString()})
   }
-  let  f= this.find(qry);
-  return this.find(qry);
-};
+  if (index >= 0 && index < this.contacts.length) {
+    this.contacts.splice(index, 1);
+  }
+}
 
-module.exports = Mongoose.Model('Agent', AgentModel);
-module.exports.FieldMap = FieldMap;
+AgentSchema.methods.codeAdd = function(code) {
+  let index = this.codes.findIndex( (x) => { return x._id.toString() === code._id.toString()});
+  if (index < 0) {
+    this.codes.push(code);
+  }
+}
+
+/**
+ * remove a code
+ * @param index Number (the index, _id of the code, or the code with _id)
+ */
+AgentSchema.methods.codeRemove = function (index) {
+  if (typeof index === 'object') {
+    let idString = index._id ? index._id.toString() : index.toString();
+    index = this.codes.findIndex( (c) => { return c.toString() === idString})
+  }
+  if (index >= 0 && index < this.codes.length) {
+    this.codes.splice(index, 1);
+  }
+}
+
+AgentSchema.methods.codeSet = function(codes) {
+  let vm = this;
+  // codes not yet in vm.codes
+  let add = codes.filter(x => {
+    return vm.codes.findIndex( (k) => {
+      return x._id.toString() === k.toString()
+    }) < 0;
+  });
+
+  let remove = vm.codes.filter(x => {
+    return codes.findIndex( (k) => {
+      return x._id.toString() === k._id.toString()
+    }) < 0
+  })
+  add.forEach((x) => { vm.codeAdd(x) });
+  remove.forEach( (x) => { vm.codeRemove(x)});
+}
+
+module.exports = Mongoose.Model('Agent', AgentSchema);
