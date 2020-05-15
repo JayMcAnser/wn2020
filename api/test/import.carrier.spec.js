@@ -7,19 +7,22 @@ const DbMySql = Db.DbMySQL;
 const DbMongo = Db.DbMongo;
 const chai = require('chai');
 const assert = chai.assert;
-const ImportCarrier = require('../import/carriers');
+const ImportCarrier = require('../import/carrier-import');
 const Carrier = require('../model/carrier');
 const Art = require('../model/art');
 const Setup = require('../lib/setup');
+const Session = require('../lib/session');
 
 describe('import.carrier', function() {
   this.timeout('10000');
 
   let mySQL;
+  let session;
   before(() => {
     return Carrier.deleteMany({}).then(() => {
       return Art.deleteMany({}).then( () => {
         return DbMySql.connect().then((con) => {
+          session = new Session('test-import-carrier');
           mySQL = con;
           let setup = new Setup();
           return setup.run();
@@ -68,9 +71,9 @@ describe('import.carrier', function() {
       "file_md5": "md5",
       "view_rating_website": 2
     };
-    let imp = new ImportCarrier();
-    return imp.runOnData(record).then( (mRec) => {
-      let obj = mRec.objectGet();
+    let imp = new ImportCarrier({session});
+    return imp.runOnData(record).then( (obj) => {
+
       assert.equal(obj.type, "tape");
       assert.equal(obj.locationNumber, 'loc-nr');
       assert.equal(obj.searchCode, 'search code');
@@ -104,7 +107,7 @@ describe('import.carrier', function() {
 
   it('run - clean', () => {
     const limit = 2;
-    let imp = new ImportCarrier({ limit: limit});
+    let imp = new ImportCarrier({ session, limit: limit});
     return imp.run(mySQL).then( (result) => {
       assert.equal(result.count, limit)
     })
@@ -112,7 +115,7 @@ describe('import.carrier', function() {
 
   it('import full record with art and sub codes', async () => {
     const limit = 10;
-    let imp = new ImportCarrier({ limit: limit});
+    let imp = new ImportCarrier({ session, limit: limit});
     await imp.runOnData({carrier_ID: 2131});
     let carrier = await Carrier.findOne({carrierId: 2131});
     assert.isDefined(carrier);

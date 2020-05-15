@@ -7,16 +7,19 @@ const DbMySql = Db.DbMySQL;
 const DbMongo = Db.DbMongo;
 const chai = require('chai');
 const assert = chai.assert;
-const ImportCode = require('../import/codes');
+const CodeImport = require('../import/code-import');
 const Code = require('../model/code');
 const Setup = require('../lib/setup');
+const Session = require('../lib/session');
 
 describe('import.code', function() {
 
   let mySQL;
+  let session;
   before(() => {
     return Code.deleteMany({}).then(() => {
       return DbMySql.connect().then((con) => {
+        session = new Session('test-import-codes')
         mySQL = con;
         let setup = new Setup();
         return setup.run();
@@ -47,9 +50,8 @@ describe('import.code', function() {
         "sort_on_nl": "sort on nl",
         "not_used": 1,
       };
-    let imp = new ImportCode();
-    return imp.runOnData(record).then( (mRec) => {
-      let obj = mRec.objectGet();
+    let imp = new CodeImport({session});
+    return imp.runOnData(record).then( (obj) => {
       assert.equal(obj.codeId, 9999999);
       assert.equal(obj.guid, 'guid');
       assert.equal(obj.groupId, 2);
@@ -73,7 +75,7 @@ describe('import.code', function() {
 
   it('run - clean', () => {
     const limit = 10;
-    let imp = new ImportCode({ limit: limit});
+    let imp = new CodeImport({ session, limit: limit});
     return imp.run(mySQL).then( (result) => {
       assert.equal(result.count, limit)
     })

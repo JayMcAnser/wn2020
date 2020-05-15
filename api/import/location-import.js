@@ -9,8 +9,8 @@ const Config = require('config');
 const Logging = require('../lib/logging');
 // const Contact = require('../model/contact');
 const Carrier = require('../model/carrier');
-const ImportCarrier = require('../import/carriers');
-const ImportContact = require('../import/contact');
+const ImportCarrier = require('../import/carrier-import');
+const ImportContact = require('../import/contact-import');
 const recordValue = require('../import/import-helper').recordValue;
 const makeNumber = require('../import/import-helper').makeNumber;
 // const AddrFieldMap = require('./contact').FieldMap;
@@ -38,7 +38,7 @@ let importContact = false;
 contactLink = async function(parent, addressId) {
   if (addressId) {
     if (importContact === false) {
-      importContact = new ImportContact();
+      throw new Error('import Contact not activated');
     }
     return importContact.runOnData({address_ID: addressId}, {loadSql: true});
   }
@@ -49,7 +49,7 @@ let importCarrier = false;
 carrierLink = async function(parent, carrierId) {
   if (carrierId){
     if (importCarrier === false) {
-      importCarrier = new ImportCarrier();
+      throw new Error('import Carrier not activated');
     }
     return importCarrier.runOnData({carrier_ID: carrierId}, {loadSql: true});
   }
@@ -88,14 +88,17 @@ const itemMap = {
 class LocationImport {
 
   constructor(options= {}) {
+    this.session = options.session;
+    importContact = new ImportContact({session: this.session});
+    importCarrier = new ImportCarrier({session: this.session});
     this._limit = options.limit !== undefined ? options.limit : 0;
     this._step = 5;
   }
 
   async _convertRecord(con, record, options = {}) {
-    let dis = await Distribution.findOne({locationId: record.location_ID});
+    let dis = await Distribution.queryOne(this.session,{locationId: record.location_ID});
     if (!dis) {
-      dis = await Distribution.create({locationId: record.location_ID});
+      dis = await Distribution.create(this.session, {locationId: record.location_ID});
     }
     let dataRec = {};
     for (let fieldName in ConvertMap) {
@@ -105,7 +108,8 @@ class LocationImport {
       dataRec[fieldName] = await recordValue(record, ConvertMap[fieldName], Distribution);
     }
     try {
-      dis.objectSet(dataRec);
+      Object.assign(dis, dataRec);
+      // dis.objectSet(dataRec);
       dis = await dis.save();
 
       // start converting lines of carriers

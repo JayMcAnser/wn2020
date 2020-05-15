@@ -7,18 +7,22 @@ const DbMySql = Db.DbMySQL;
 const DbMongo = Db.DbMongo;
 const chai = require('chai');
 const assert = chai.assert;
-const ImportContact = require('../import/contact');
+const ImportContact = require('../import/contact-import');
 const Contact = require('../model/contact');
 const Setup = require('../lib/setup');
+const Session = require('../lib/session');
 
 describe('import.contact', function() {
   this.timeout('10000');
 
   let mySQL;
+  let session;
+
   before(() => {
     return Contact.deleteMany({}).then(() => {
       return DbMySql.connect().then((con) => {
         mySQL = con;
+        session = new Session('test-import-contact');
         let setup = new Setup();
         return setup.run();
       })
@@ -46,9 +50,8 @@ describe('import.contact', function() {
       "mailchimp_json": 'mailchimp json',
       "mailchimp_guid": 'mailchimp guid'
     };
-    let imp = new ImportContact();
-    return imp.runOnData(record).then( (mRec) => {
-      let obj = mRec.objectGet();
+    let imp = new ImportContact({session});
+    return imp.runOnData(record).then( (obj) => {
       assert.equal(obj.type, "institution");
       assert.equal(obj.guid, 'guid');
      // assert.equal(obj.parent, 1);
@@ -71,7 +74,7 @@ describe('import.contact', function() {
 
   it('run - clean', () => {
     const limit = 10;
-    let imp = new ImportContact({ limit: limit});
+    let imp = new ImportContact({ session, limit: limit});
     return imp.run(mySQL).then( (result) => {
       assert.equal(result.count, limit)
     })
@@ -79,7 +82,7 @@ describe('import.contact', function() {
 
   it('import full record codes', async () => {
     const limit = 10;
-    let imp = new ImportContact({ limit: limit});
+    let imp = new ImportContact({ session, limit: limit});
     await imp.runOnData({address_ID: 3});
     let cnt = await Contact.findOne({addressId: 3});
     assert.isDefined(cnt);

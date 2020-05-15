@@ -7,17 +7,21 @@ const DbMySql = Db.DbMySQL;
 const DbMongo = Db.DbMongo;
 const chai = require('chai');
 const assert = chai.assert;
-const ImportAgent = require('../import/agents');
+const ImportAgent = require('../import/agent-import');
 const Agent = require('../model/agent');
 const Setup = require('../lib/setup');
+const Session = require('../lib/session');
 
 describe('import.agent', function() {
   this.timeout('10000');
 
   let mySQL;
+  let session;
+
   before(() => {
     return Agent.deleteMany({}).then(() => {
       return DbMySql.connect().then((con) => {
+        session = new Session('test-import-agent')
         mySQL = con;
         let setup = new Setup();
         return setup.run();
@@ -43,9 +47,8 @@ describe('import.agent', function() {
       "customer_number": "customer nr",
       "royalties_percentage": 50
     };
-    let imp = new ImportAgent();
-    return imp.runOnData(record).then( (mRec) => {
-      let obj = mRec.objectGet();
+    let imp = new ImportAgent({session});
+    return imp.runOnData(record).then( (obj) => {
       assert.equal(obj.type, "collective in distribution");
       assert.equal(obj.name, 'name');
       assert.equal(obj.sortOn, 'sort on');
@@ -62,7 +65,7 @@ describe('import.agent', function() {
 
   it('run - clean', () => {
     const limit = 2;
-    let imp = new ImportAgent({ limit: limit});
+    let imp = new ImportAgent({ session, limit: limit});
     return imp.run(mySQL).then( (result) => {
       assert.equal(result.count, limit)
     })
@@ -70,7 +73,7 @@ describe('import.agent', function() {
 
   it('import full record codes', async () => {
     const limit = 10;
-    let imp = new ImportAgent({ limit: limit});
+    let imp = new ImportAgent({ session, limit: limit});
     await imp.runOnData({agent_ID: 3});
     let agent = await Agent.findOne({agentId: 3});
     assert.isDefined(agent);

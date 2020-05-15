@@ -15,7 +15,6 @@ const Util = require('../lib/util');
 describe('model.distribution', () => {
 
   let contact1;
-  let objAddr;
   let dist;
   let art;
   let session;
@@ -25,11 +24,10 @@ describe('model.distribution', () => {
       session = new Session('distribution');
       contact1 = await Contact.findOne({addressId: 1});
       if (!contact1) {
-        contact1 = Contact.create({addressId: 1, name: 'test 1'});
+        contact1 = Contact.create(session, {addressId: 1, name: 'test 1'});
         await contact1.save();
         contact1 = await Contact.findOne({addressId: 1});
       }
-      objAddr = contact1.objectGet();
     })
   });
 
@@ -67,7 +65,7 @@ describe('model.distribution', () => {
       distr = await Distribution.findOne({locationId: 1});
       art = await Art.findOne({artId: '200'});
       if (!art) {
-        art = Art.create({artId: '200', title: 'dis.art 1'});
+        art = Art.create(session, {artId: '200', title: 'dis.art 1'});
         await art.save();
         // must do because if not stored releation won't work
         art = await Art.findOne({artId: '200'});
@@ -126,7 +124,7 @@ describe('model.distribution', () => {
       distr = Distribution.create(session, {locationId: 2, code: '2000-0002'});
       art1 = await Art.findOne({artId: '201'});
       if (!art1) {
-        art1 = Art.create({artId: '201', title: 'dis.art 2'});
+        art1 = Art.create(session, {artId: '201', title: 'dis.art 2'});
         await art1.save();
         // must do because if not stored releation won't work
         art1 = await Art.find({artId: '201'});

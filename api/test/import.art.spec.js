@@ -7,17 +7,21 @@ const DbMysql = Db.DbMySQL;
 const DbMongo = Db.DbMongo;
 const chai = require('chai');
 const assert = chai.assert;
-const ImportArt = require('../import/art');
+const ImportArt = require('../import/art-import');
 const Art = require('../model/art');
 const Setup = require('../lib/setup');
+const Session = require('../lib/session');
 
 describe('import.art', function() {
   this.timeout(5000);
 
   let mySQL;
+  let session;
+
   before( () => {
     return Art.deleteMany({}).then( () => {
       return DbMysql.connect().then((con) => {
+        session = new Session('test-import-art')
         mySQL = con;
         let setup = new Setup();
         return setup.run();
@@ -26,7 +30,7 @@ describe('import.art', function() {
   });
 
   it('field data', () => {
-    let imp = new ImportArt();
+    let imp = new ImportArt({session});
     let record = {
       "art_ID": 1,
       "objecttype_ID": 1,
@@ -95,8 +99,7 @@ describe('import.art', function() {
       "internal_agent_ID": 3,
       "work_access_id": 0
     };
-    return imp.runOnData(record).then( (rec) => {
-      let mRec = rec.objectGet();
+    return imp.runOnData(record).then( (mRec) => {
       assert.equal(mRec.artId, 1);
       assert.equal(mRec.type, 'video');
       assert.equal(mRec.searchcode, 'searchcode');
@@ -124,14 +127,14 @@ describe('import.art', function() {
   // });
 
   it ('import url', async() => {
-    let imp = new ImportArt({ limit: 2});
+    let imp = new ImportArt({ session, limit: 2});
     let sql = 'SELECT * from art WHERE art_ID=18149';
     let qry = await mySQL.query(sql);
+    assert.equal(qry.length, 1)
     await imp.runOnData(qry[0]);
     let rec = await Art.findOne({artId: 18149});
-    assert.isDefined(rec);
+    assert.isTrue(rec !== null);
     assert.isTrue(Object.keys(rec).length > 0);
-    let obj = rec.objectGet();
-    assert.equal(obj.urls.length, 2);
+    assert.equal(rec.urls.length, 2);
   })
 });

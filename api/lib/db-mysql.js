@@ -11,8 +11,7 @@ let DbMysql  = {
     const createConnection = mysql.createConnection;
 
     mysql.createConnection = function () {
-      console.log(`createConnection called in ${fnName}!`);
-
+      Logging.info(`mysql: connect to ${arguments[0].host}${arguments[0].port ? ':' + arguments[0].port: ''}/${arguments[0].database} as ${arguments[0].user}`);
       mysql.createConnection = createConnection;
 
       return createConnection(...arguments);

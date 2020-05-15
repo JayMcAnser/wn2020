@@ -7,7 +7,7 @@ const makeNumber = require('./import-helper').makeNumber;
 const makeLength = require('./import-helper').makeLength;
 const insertField = require('./import-helper').insertField;
 const ImportHelper = require('./import-helper');
-const CodeImport = require('./codes');
+const CodeImport = require('./code-import');
 
 const FieldMap = {
   agentId: 'agent_ID',
@@ -40,9 +40,10 @@ const FieldMap = {
 class AgentImport {
   constructor(options = {}) {
     const STEP = 5
+    this.session = options.session;
     this._limit = options.limit !== undefined ? options.limit : 0;
     this._step = this._limit < STEP ? this._limit : STEP;
-    this._codeImport = new CodeImport();
+    this._codeImport = new CodeImport({session: this.session});
   }
 
   /**
@@ -55,7 +56,7 @@ class AgentImport {
    * @private
    */
   async _convertRecord(con, record, options = {}) {
-    let agent = await Agent.findOne({agentId: record.agent_ID});
+    let agent = await Agent.queryOne(this.session, {agentId: record.agent_ID});
     if (agent) {
       return agent;
     }
@@ -92,7 +93,7 @@ class AgentImport {
     }
     try {
       // should also import the agent
-      agent = Agent.create(dataRec);
+      agent = Agent.create(this.session, dataRec);
       agent = await agent.save();
     } catch (e) {
       Logging.error(`error importing agent[${record.agent_ID}]: ${e.message}`)

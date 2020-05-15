@@ -7,21 +7,25 @@ const DbMySql = Db.DbMySQL;
 const DbMongo = Db.DbMongo;
 const chai = require('chai');
 const assert = chai.assert;
-const ImportLocation = require('../import/locations');
+const ImportLocation = require('../import/location-import');
 const Distribution = require('../model/distribution');
 const Contact = require('../model/contact');
 const Carrier = require('../model/carrier');
 const Setup = require('../lib/setup');
+const Session = require('../lib/session');
 
 describe('import.location', function() {
   this.timeout(10000);
 
   let mySQL;
+  let session;
+
   before( () => {
     return Distribution.deleteMany({}).then( () => {
       return Contact.deleteMany({}).then( () => {
         return Carrier.deleteMany({}).then( () => {
           return DbMySql.connect().then((con) => {
+            session = new Session('test-import.location')
             mySQL = con;
             let setup = new Setup();
             return setup.run();
@@ -32,7 +36,7 @@ describe('import.location', function() {
   });
 
   it('check field information', () => {
-    let imp = new ImportLocation();
+    let imp = new ImportLocation({session});
     let record = {
       "location_ID": 1,
       "objecttype_ID": 7000,
@@ -78,8 +82,7 @@ describe('import.location', function() {
       "production_costs_txt": "4,00",
       "is_rental": 1
     };
-    return imp.runOnData(record).then( (mRec) => {
-      let obj = mRec.objectGet();
+    return imp.runOnData(record).then( (obj) => {
       assert.equal(obj.locationId, 1);
       assert.equal(obj.code, '2005-0001');
       assert.equal(obj.invoiceNumber, '112233');
@@ -98,7 +101,7 @@ describe('import.location', function() {
 
   it('run - clean', () => {
     const limit = 2;
-    let imp = new ImportLocation({ limit: limit});
+    let imp = new ImportLocation({session, limit: limit});
    // assert.isTrue(true);
     return imp.run(mySQL).then( (result) => {
       assert.isTrue(result.count > limit)

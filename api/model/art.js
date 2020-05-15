@@ -100,6 +100,16 @@ ArtSchema.virtual('creatorIndex')
       return this.agents.findIndex( (x) => x.role === ROLE_CREATOR);
     }
   });
+ArtSchema.virtual('creator')
+  .get(function() {
+    let index = this.creatorIndex;
+    if (index >= 0) {
+      let obj = this.agents[index].agent;
+      obj.royaltiesPercentage = this.agents[index].percentage;
+      return obj
+    };
+    return undefined
+  });
 
 
 
@@ -216,6 +226,9 @@ ArtSchema.methods.agentAdd = function(data) {
     if (!dataRec.role) {
       dataRec.role = this.agents.length ? ROLE_CONTRIBUTOR : ROLE_CREATOR;
     }
+    if (!dataRec.percentage) {
+      dataRec.percentage = 0;
+    }
     index = this.agents.length;
     this.agents.push(dataRec);
     this._setCreator(index, data.role === ROLE_CREATOR)
@@ -239,6 +252,12 @@ ArtSchema.methods.agentUpdate = function(id, data) {
     index = this.agents.findIndex( (x) => x._id.toString() === id.toString())
   } else {
     index = id;
+  }
+  if (!data.role) {
+    data.role = this.agents.length ? ROLE_CONTRIBUTOR : ROLE_CREATOR;
+  }
+  if (!data.percentage) {
+    data.percentage = 0;
   }
   if (index >= 0 && index < this.agents.length) {
     Object.assign(this.agents[index], data);

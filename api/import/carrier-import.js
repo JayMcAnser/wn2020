@@ -4,8 +4,8 @@
  */
 const DbMySQL = require('../lib/db-mysql');
 const Carrier = require('../model/carrier');
-const ArtImport = require('./art');
-const CodeImport = require('./codes');
+const ArtImport = require('./art-import');
+const CodeImport = require('./code-import');
 const Logging = require('../lib/logging');
 const recordValue = require('../import/import-helper').recordValue;
 const makeNumber = require('../import/import-helper').makeNumber;
@@ -78,10 +78,11 @@ class CarrierImport {
 
   constructor(options= {}) {
     const STEP = 5;
+    this.session = options.session;
     this._limit = options.limit !== undefined ? options.limit : 0;
     this._step = this._limit < STEP ? this._limit : STEP;
-    this._artImport = new ArtImport();
-    this._codeImport = new CodeImport();
+    this._artImport = new ArtImport({session: this.session});
+    this._codeImport = new CodeImport({session: this.session});
   }
 
   /**
@@ -94,9 +95,9 @@ class CarrierImport {
    * @private
    */
   async _convertRecord(con, record, options = {}) {
-    let carrier = await Carrier.findOne({carrierId: record.carrier_ID});
+    let carrier = await Carrier.queryOne(this.session, {carrierId: record.carrier_ID});
     if (!carrier) {
-      carrier = await Carrier.create({carrierId: record.carrier_ID});
+      carrier = await Carrier.create(this.session, {carrierId: record.carrier_ID});
     }
     let dataRec = {};
     for (let fieldName in FieldMap) {
@@ -147,7 +148,7 @@ class CarrierImport {
       } else {
         dataRec['noArt'] = true;
       }
-      carrier.objectSet(dataRec);
+      Object.assign(carrier, dataRec);
       carrier = await carrier.save();
     } catch (e) {
       Logging.error(`error importing carrier[${record.carrier_ID}]: ${e.message}`)

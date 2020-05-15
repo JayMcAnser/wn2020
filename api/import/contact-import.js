@@ -2,7 +2,7 @@
 const DbMySQL = require('../lib/db-mysql');
 const Contact = require('../model/contact');
 const Logging = require('../lib/logging');
-const CodeImport = require('../import/codes');
+const CodeImport = require('./code-import');
 const recordValue = require('./import-helper').recordValue;
 const makeNumber = require('./import-helper').makeNumber;
 const makeLength = require('./import-helper').makeLength;
@@ -45,7 +45,7 @@ const FieldMap = {
 
 const AddressFieldMap = {
   type: (rec) => {
-    switch (rec.type_ID) {
+    switch (rec.code_ID) {
       case 0: return undefined;
       case 111: return 'address';
       case 151: return 'address';
@@ -73,10 +73,12 @@ const AddressFieldMap = {
 class ContactImport {
   constructor(options = {}) {
     const STEP = 5;
+    this.session = options.session;
     this._limit = options.limit !== undefined ? options.limit : 0;
     this._step = this._limit < STEP ? this._limit : STEP;
-    this._codeImport = new CodeImport();
+    this._codeImport = new CodeImport({session: this.session});
     this._countries = false;
+
   }
 
   async _countryTranslate(con, id) {
@@ -106,7 +108,7 @@ class ContactImport {
    * @private
    */
   async _convertRecord(con, record, options = {}) {
-    let contact = await Contact.findOne({addressId: record.address_ID});
+    let contact = await Contact.queryOne(this.session, {addressId: record.address_ID});
     if (contact) {
       return contact;
     }
@@ -141,7 +143,7 @@ class ContactImport {
         }
       }
     }
-    contact = Contact.create(dataRec);
+    contact = Contact.create(this.session, dataRec);
     // -- add the addresses
     sql = `SELECT * FROM addr_fields WHERE address_ID=${record.address_ID} AND code_ID=151`;
     qry = await con.query(sql);
@@ -159,7 +161,7 @@ class ContactImport {
           addrRec[fieldName] = a;
         }
       }
-      contact.addressAdd(addrRec);
+      contact.locationAdd(addrRec);
     }
 
 

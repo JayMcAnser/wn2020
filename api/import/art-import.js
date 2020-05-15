@@ -2,8 +2,8 @@
 const DbMySQL = require('../lib/db-mysql');
 const Art = require('../model/art');
 const Logging = require('../lib/logging');
-const CodeImport = require('../import/codes');
-const AgentImport = require('../import/agents');
+const CodeImport = require('./code-import');
+const AgentImport = require('../import/agent-import');
 const recordValue = require('./import-helper').recordValue;
 const makeNumber = require('./import-helper').makeNumber;
 const makeLength = require('./import-helper').makeLength;
@@ -111,10 +111,11 @@ const FieldMap = {
 
 class ArtImport {
   constructor(options = {}) {
+    this.session = options.session;
     this._limit = options.limit !== undefined ? options.limit : 0;
     this._step = 5;
-    this._codeImport = new CodeImport();
-    this._agentImport = new AgentImport();
+    this._codeImport = new CodeImport({session: this.session});
+    this._agentImport = new AgentImport({ session: this.session});
   }
 
   /**
@@ -127,7 +128,7 @@ class ArtImport {
    * @private
    */
   async _convertRecord(con, record, options = {}) {
-    let art = await Art.findOne({artId: record.art_ID});
+    let art = await Art.queryOne(this.session,{artId: record.art_ID});
     if (art) {
       return art;
     }
@@ -162,7 +163,7 @@ class ArtImport {
         }
       }
     }
-    art = Art.create(dataRec);
+    art = Art.create(this.session, dataRec);
     // add the urls
     sql = `SELECT * FROM art_url WHERE art_ID=${record.art_ID}`;
     qry = await con.query(sql);
@@ -171,7 +172,7 @@ class ArtImport {
     }
 
     // add agents
-    sql = `SELECT * FROM agent2art WHERE art_ID=${record.art_ID}`;
+    sql = `SELECT * FROM agent2art WHERE art_ID=${record.art_ID} ORDER BY role_ID`;
     qry = await con.query(sql);
     for (let agentIndex = 0; agentIndex < qry.length; agentIndex++) {
       let agent = await this._agentImport.runOnData(qry[agentIndex], {loadSql: true});
@@ -181,9 +182,9 @@ class ArtImport {
           case 2201: role = ROLE_CREATOR; break;
           case 2202: role = ROLE_CONTRIBUTOR; break;
           case 2203: role = ROLE_SUBJECT; break;
-          default: role = `unknown (${agent[agentIndex].roldID})`
+          default: role = `unknown (${agent[agentIndex].role_ID})`
         }
-        art.agentAdd({artist: agent, percentage: qry[agentIndex].percentage,role: role })
+        art.agentAdd({ agent, percentage: qry[agentIndex].percentage, role })
       }
     }
     try {

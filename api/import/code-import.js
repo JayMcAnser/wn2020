@@ -35,6 +35,7 @@ class CodeImport {
 
   constructor(options= {}) {
     const STEP = 5;
+    this.session = options.session;
     this._limit = options.limit !== undefined ? options.limit : 0;
     this._step = this._limit < STEP ? this._limit : STEP;
   }
@@ -49,7 +50,7 @@ class CodeImport {
    * @private
    */
   async _convertRecord(con, record, options = {}) {
-    let code = await Code.findOne({codeId: record.code_ID});
+    let code = await Code.queryOne(this.session, {codeId: record.code_ID});
     if (code) {
       return code;
     }
@@ -72,7 +73,7 @@ class CodeImport {
       dataRec[fieldName] = await recordValue(record, FieldMap[fieldName], Code);
     }
     try {
-      code = Code.create(dataRec);
+      code = Code.create(this.session, dataRec);
       code = await code.save();
     } catch (e) {
       Logging.error(`error importing code[${record.code_ID}]: ${e.message}`)

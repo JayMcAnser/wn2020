@@ -96,7 +96,7 @@ describe('model.art', () => {
     });
 
     it('add one artist', async () => {
-      agent1 = Agent.create({agentId: 1, name: 'agent 1'});
+      agent1 = Agent.create(session, {agentId: 1, name: 'agent 1'});
       agent1 = await agent1.save();
       agent1 = await Agent.findOne({agentId: 1});
       art3.agentAdd({role: ROLE_CREATOR, agent: agent1, comments: 'first'});
@@ -111,18 +111,18 @@ describe('model.art', () => {
 
       // -- get the names of the artist
       // TODO: adjust when agent is in v0.2
-      // art3 = await Art.findOne({artId: 30})
-      //   .populate('agents.agent');
-      // art3.session(session);
-      // assert.isDefined(art3.agents);
-      // assert.equal(art3.agents.length, 1);
-      // assert.isDefined(art3.agent);
-      // assert.equal(art3.artist.name, 'agent 1');
-      // assert.equal(art3.agents[0].percentage, 100);
+      art3 = await Art.findOne({artId: 30})
+        .populate('agents.agent');
+      art3.session(session);
+      assert.isDefined(art3.agents);
+      assert.equal(art3.agents.length, 1);
+      assert.isDefined(art3.creator);
+      assert.equal(art3.creator.name, 'agent 1');
+      assert.equal(art3.creator.royaltiesPercentage, 100, 'field is temporary moved to the agent');
     });
 
     it('add other member', async() => {
-      agent2 = Agent.create({agentId: 2, name: 'agent 2'});
+      agent2 = Agent.create(session, {agentId: 2, name: 'agent 2'});
       agent2 = await agent2.save();
       agent2 = await Agent.findOne({agentId: 2});
       art3.agentAdd({role: ROLE_CREATOR, agent: agent2, percentage: 100});
