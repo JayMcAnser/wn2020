@@ -63,6 +63,15 @@ describe('model.art', () => {
     art2 = await Art.queryOne(session,{artId: 12});
     assert.isDefined(art2.codes);
     assert.equal(art2.codes.length, 1);
+
+
+    let code2 = Code.create(session, {codeId: 22, text: 'code 22'});
+    code2 = await code2.save();
+    art2.codeAdd(code2);
+    await art2.save()
+    art2 = await Art.queryOne(session, {artId: 12});
+    assert.equal(art2.codes.length, 2);
+
   });
 
 
@@ -199,7 +208,4 @@ describe('model.art', () => {
     })
   });
 
-  describe('code', () => {
-
-  })
 });

@@ -6,6 +6,7 @@ const Mongoose = require('../lib/db-mongo');
 const Schema = Mongoose.Schema;
 const UndoHelper = require('mongoose-undo');
 const ErrorTypes = require('error-types');
+const ModelHelper = require('./model-helper');
 /**
  * do NOT start a field with _. It will be skipped in the get
  * @type {{def: {type: StringConstructor, required: boolean}, text: StringConstructor}}
@@ -63,7 +64,11 @@ const LocationSchema = {
   country: String,
 };
 
-const ContactLayout = {
+const ContactExtendedLayout = {
+  addressId: String,
+  exactId: String,
+}
+const ContactLayout = Object.assign({
   addressId: String,
   type: String,
   guid: String,
@@ -84,32 +89,15 @@ const ContactLayout = {
   mailchimpJson: String,
   mailchimpGuid: String,
 
-  // workAddress: {type: 'string', name: 'work address', group:'address',
-  //   setValue: () => undefined,
-  //   getValue: (rec, mongoRec) => {
-  //     if (rec.addresses && rec.addresses.length) {
-  //       let def = undefined;
-  //       for (let l = 0; l < rec.addresses.length; l++) {
-  //         if (rec.addresses[l].usage === 'work') {
-  //           return rec.addresses[l]
-  //         } else if (rec.addresses[l].isDefault) {
-  //           def = rec.addresses[l]
-  //         }
-  //       }
-  //       if (def) {
-  //         return def;
-  //       } else {
-  //         return rec.addresses[0]
-  //       }
-  //     } else {
-  //       return undefined;
-  //     }
-  //   }
-  // }
   location: [LocationSchema],
-};
+  codes: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Code'
+  }]
+}, ContactExtendedLayout);
 
 let ContactSchema = new Schema(ContactLayout);
+ModelHelper.upgradeBuilder('ContactExtra', ContactSchema, ContactExtendedLayout);
 
 
 ContactSchema.methods.locationAdd = function(data) {
@@ -136,6 +124,16 @@ ContactSchema.methods.locationUpdate = function(index, itemData = false) {
     throw new ErrorTypes.ErrorNotFound('address.location not found');
   }
 };
+
+ContactSchema.methods.codeAdd = function(code) {
+  ModelHelper.addObjectId(this.codes, code)
+}
+ContactSchema.methods.codeRemove = function(index) {
+  ModelHelper.removeObjectId(this.codes, index);
+}
+ContactSchema.methods.codeSet = function(codes) {
+  ModelHelper.setObjectIds(this.codes, codes);
+}
 
 ContactSchema.plugin(UndoHelper.plugin);
 module.exports = Mongoose.Model('Contact', ContactSchema);

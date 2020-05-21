@@ -26,6 +26,7 @@ const Schema = Mongoose.Schema;
 const ErrorTypes = require('error-types');
 const UndoHelper = require('mongoose-undo');
 const Logging = require('../lib/logging');
+const ModelHelper = require('./model-helper');
 const ROLE_CREATOR = 'creator';
 const ROLE_CONTRIBUTOR = 'contributor';
 const ROLE_SUBJECT = 'sublect';
@@ -41,7 +42,12 @@ const ArtistSchema = new Schema({
   comments: String
 });
 
-const ArtLayout = {
+const ArtExtendLayout = {
+  artId: String,
+  newInfo: String,
+}
+
+const ArtLayout = Object.assign({
   artId: String,
   type: String,
   searchcode:  String,
@@ -52,12 +58,6 @@ const ArtLayout = {
   isPartOfCollection: Boolean,
   yearFrom: String,
   yearTill: String,
-  // period: {
-  //   type: 'string', name: 'period', group: 'general', getValue: (rec) => {
-  //     let s = `${rec.yearFrom ? rec.yearFrom : ''}${rec.yearFrom !== undefined && rec.yearTill !== undefined ? ' - ' : ''}${rec.yearTill ? rec.yearTill : ''}`
-  //     return s.length ? s : undefined
-  //   }
-  // },
   length: String,
   descriptionNl: String,
   description: String,
@@ -85,9 +85,10 @@ const ArtLayout = {
     {type: String}
   ],
   created: UndoHelper.createSchema
-};
+}, ArtExtendLayout);
 
 let ArtSchema = new Schema(ArtLayout);
+ModelHelper.upgradeBuilder('ArtExtra', ArtSchema, ArtExtendLayout);
 
 ArtSchema.plugin(UndoHelper.plugin);
 
@@ -313,7 +314,15 @@ ArtSchema.methods.urlSet = function(urls) {
 }
 
 
-
+ArtSchema.methods.codeAdd = function(code) {
+  ModelHelper.addObjectId(this.codes, code)
+}
+ArtSchema.methods.codeRemove = function(index) {
+  ModelHelper.removeObjectId(this.codes, index )
+}
+ArtSchema.methods.codeSet = function(codes) {
+  ModelHelper.setObjectIds(this.codes, codes);
+}
 module.exports = Mongoose.Model('Art', ArtSchema);
 module.exports.ROLE_CREATOR = ROLE_CREATOR;
 module.exports.ROLE_CONTRIBUTOR = ROLE_CONTRIBUTOR;

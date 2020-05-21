@@ -5,6 +5,7 @@
 const Mongoose = require('../lib/db-mongo');
 const Schema = Mongoose.Schema;
 const UndoHelper = require('mongoose-undo');
+const ModelHelper = require('./model-helper');
 
 const ContactSchema = new Schema({
   contact: {
@@ -106,10 +107,11 @@ AgentSchema.methods.contactRemove = function(index) {
 }
 
 AgentSchema.methods.codeAdd = function(code) {
-  let index = this.codes.findIndex( (x) => { return x._id.toString() === code._id.toString()});
-  if (index < 0) {
-    this.codes.push(code);
-  }
+  ModelHelper.addObjectId(this.codes, code);
+  // let index = this.codes.findIndex( (x) => { return x._id.toString() === code._id.toString()});
+  // if (index < 0) {
+  //   this.codes.push(code);
+  // }
 }
 
 /**
@@ -117,31 +119,33 @@ AgentSchema.methods.codeAdd = function(code) {
  * @param index Number (the index, _id of the code, or the code with _id)
  */
 AgentSchema.methods.codeRemove = function (index) {
-  if (typeof index === 'object') {
-    let idString = index._id ? index._id.toString() : index.toString();
-    index = this.codes.findIndex( (c) => { return c.toString() === idString})
-  }
-  if (index >= 0 && index < this.codes.length) {
-    this.codes.splice(index, 1);
-  }
+  ModelHelper.removeObjectId(this.codes, index);
+  // if (typeof index === 'object') {
+  //   let idString = index._id ? index._id.toString() : index.toString();
+  //   index = this.codes.findIndex( (c) => { return c.toString() === idString})
+  // }
+  // if (index >= 0 && index < this.codes.length) {
+  //   this.codes.splice(index, 1);
+  // }
 }
 
 AgentSchema.methods.codeSet = function(codes) {
-  let vm = this;
-  // codes not yet in vm.codes
-  let add = codes.filter(x => {
-    return vm.codes.findIndex( (k) => {
-      return x._id.toString() === k.toString()
-    }) < 0;
-  });
-
-  let remove = vm.codes.filter(x => {
-    return codes.findIndex( (k) => {
-      return x._id.toString() === k._id.toString()
-    }) < 0
-  })
-  add.forEach((x) => { vm.codeAdd(x) });
-  remove.forEach( (x) => { vm.codeRemove(x)});
+  ModelHelper.setObjectIds(this.codes, codes);
+  // let vm = this;
+  // // codes not yet in vm.codes
+  // let add = codes.filter(x => {
+  //   return vm.codes.findIndex( (k) => {
+  //     return x._id.toString() === k.toString()
+  //   }) < 0;
+  // });
+  //
+  // let remove = vm.codes.filter(x => {
+  //   return codes.findIndex( (k) => {
+  //     return x._id.toString() === k._id.toString()
+  //   }) < 0
+  // })
+  // add.forEach((x) => { vm.codeAdd(x) });
+  // remove.forEach( (x) => { vm.codeRemove(x)});
 }
 
 module.exports = Mongoose.Model('Agent', AgentSchema);

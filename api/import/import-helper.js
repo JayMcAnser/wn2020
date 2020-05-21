@@ -85,7 +85,7 @@ function stepStart(type) {
 }
 function step(count) {
   let rotate = ['|','/','-','\\'];
-  process.stdout.write(`\r${rotate[count % 4]}`);
+  process.stdout.write(`${rotate[count % 4]} ${count}\r`);
 }
 
 function stepEnd(type) {

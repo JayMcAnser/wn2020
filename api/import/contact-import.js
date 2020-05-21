@@ -109,8 +109,8 @@ class ContactImport {
    */
   async _convertRecord(con, record, options = {}) {
     let contact = await Contact.queryOne(this.session, {addressId: record.address_ID});
-    if (contact) {
-      return contact;
+    if (!contact) {
+      contact = Contact.create(this.session);
     }
     let sql;
     let qry;
@@ -130,20 +130,17 @@ class ContactImport {
       }
       dataRec[fieldName] = await recordValue(record, FieldMap[fieldName], Contact);
     }
+    Object.assign(contact, dataRec);
     //-- add the codes
     sql = `SELECT * FROM address2code WHERE address_ID=${record.address_ID}`;
     qry = await con.query(sql);
     for (let codeIndex = 0; codeIndex < qry.length; codeIndex++) {
       let code = await this._codeImport.runOnData(qry[codeIndex], {loadSql: true})
-      if (code) {
-        if (dataRec.codes === undefined) {
-          dataRec.codes = [code.id]
-        } else {
-          dataRec.codes.push(code.id)
-        }
+      if (code) { // codes that are remove are skipped
+        contact.codeAdd(code);
       }
     }
-    contact = Contact.create(this.session, dataRec);
+
     // -- add the addresses
     sql = `SELECT * FROM addr_fields WHERE address_ID=${record.address_ID} AND code_ID=151`;
     qry = await con.query(sql);
@@ -164,8 +161,8 @@ class ContactImport {
       contact.locationAdd(addrRec);
     }
 
-
     try {
+      await contact.reSync();
       contact = await contact.save();
     } catch (e) {
       Logging.error(`error importing address[${record.address_ID}]: ${e.message}`)

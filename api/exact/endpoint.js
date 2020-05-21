@@ -3,54 +3,137 @@
  */
 
 const connection = require('./exact-conection').exact;
+const camelCase = require('camelcase');
 
 class Endpoint {
-  constructor(options = {}) {
+  constructor(data = {}, options = {}) {
     this._connection  = options.connection === undefined ? connection : options.connection;
     this._rootUrl = options.rootUrl;
+    this._id = false;
+    this._data = data;
   }
+
+  // /**
+  //  * true if the record is new
+  //  * @return {boolean}
+  //  */
+  // get isNew() {
+  //   return ! this._id;
+  // }
+  //
+  // /**
+  //  * the id of the current record
+  //  * @return {boolean}
+  //  */
+  // get id() {
+  //   return this._id
+  // }
+
   /**
-   * create a new Contact and returns the id
+   * retrieve the data as an exact record
+   * @return {{}}
+   */
+  get asExact() {
+    let d = {}
+    for (let key in this._data) {
+      if (!this._data.hasOwnProperty(key)) { continue }
+      d[camelCase(key, {pascalCase: true})] = this._data[key];
+    }
+    return d;
+  }
+
+  /**
+   * takes the raw Exact data and convert it into the internal structure
    * @param data
-   * @return Promise
    */
-  create(data) {
-    return this._connection.post(this._rootUrl, data).then( (id) => {
-      let rec = new this._createRec({id : id, endPoint: this});
-      return rec;
-    });
+  fromExact(data) {
+    this._data = {}
+    for (let key in data) {
+      if (!data.hasOwnProperty(key)) { continue }
+      this._data[camelCase(key)] = data[key];
+    }
+    this._id = data.ID;
   }
 
-  update(id, data) {
-    let url = `${this._rootUrl}(guid'${id}')`;
-    return this._connection.put(url, data);
-  }
-
-  delete(id) {
-    let url = `${this._rootUrl}(guid'${id}')`;
-    return this._connection.delete(url);
-  }
-
-  findById(id) {
-    let url = `${this._rootUrl}(guid'${id}')`;
-    return this._connection.get(url).then((itm) => {
-      if (itm) {
-        return itm;
-      }
-      return false;
-    });
+  get data() {
+    return this._data;
   }
 
   /**
-   *
-   * @param options Object
-   *    - id: the unique id
-   *    - endPoint: the end point to use
-   * @private
+   * save the current record to exact
+   * @return {Promise<void>}
    */
-  _createRec(options) {
-    throw new Error('_createRec must be overruled')
+  save() {
+    if (this.isNew) {
+      return this._connection.post(this._rootUrl, this.asExact).then((id) => {
+        this._id = id;
+        return Promise.resolve(id);
+      })
+    } else {
+      let url = `${this._rootUrl}(guid'${id}')`;
+      return this._connection.put(url, this.asExact);
+    }
+  }
+
+  findById(id, options) {
+    return this._connection.get(`${this._rootUrl}?$filter=ID eq guid'${id}'`).then( (rec) => {
+      if (rec && rec.length === 1) {
+        this.fromExact(rec[0]);
+        return Promise.resolve(this);
+      }
+      return Promise.resolve(false);
+    });
+  }
+
+  delete() {
+    if (!this.isNew) {
+      let url = `${this._rootUrl}(guid'${id}')`;
+      return this._connection.delete(url);
+    }
+    return Promise.resolve(true);
   }
 }
 
+class ExactModel {
+
+  static makeReactive(obj) {
+    return new Proxy(obj, {
+      get: function(obj, prop) {
+        if (obj[prop]) {
+          return obj[prop]
+        }
+        switch (prop) {
+          case 'isNew':
+            return !obj._id;
+          case 'id':
+            return obj._id
+          default:
+            return obj._data[prop];
+        }
+      }
+    })
+  }
+  /**
+   *
+   * @param id String the unique string of the account
+   *
+   * @return {Promise<AccountRecord>} or Promise(false) if not found
+   */
+  static findById(id) {
+
+    return Promise.resolve(false)
+  }
+
+  /**
+   * returns an empty, not yet stored, AccountRecord
+   * @param data
+   * @returns a AccountRecord
+   */
+  static create(data, options) {
+    throw new Error('the ExactModel.create must be overloaded')
+  }
+}
+
+
 module.exports = Endpoint;
+module.exports.Model = ExactModel;

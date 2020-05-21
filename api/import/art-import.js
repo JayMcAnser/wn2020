@@ -188,6 +188,10 @@ class ArtImport {
       }
     }
     try {
+      if (art.agents.length === 0) {
+        Logging.warn(`missing agents of artId: ${art.artId}`);
+      }
+      await art.reSync();
       art = await art.save();
     } catch (e) {
       Logging.error(`error importing art[${record.art_ID}]: ${e.message}`)

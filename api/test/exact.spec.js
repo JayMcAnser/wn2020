@@ -5,20 +5,19 @@
 const init = require('./init');
 const chai = require('chai');
 const assert = chai.assert;
-const exact = require('../exact/conection').exact;
-const Contact = require('../exact/contact');
+const exact = require('../exact/exact-conection').exact;
 
 describe('exact - connection', function() {
 
   describe('general', () => {
-    it('division', async() => {
+    it('get division', async() => {
       let div = await exact._retrieveDivision();
       assert.equal(div, 2722931)
     })
   });
 
   let account = false;
-  let newId= false;
+  let newId = false;
 
   describe('contact - get', () => {
     let id = false;
@@ -97,16 +96,3 @@ describe('exact - connection', function() {
   })
 });
 
-//
-// describe('exact - contact', async () => {
-//   let ACCOUNT = 'a2fce85c-0086-440e-bc01-36eb89346b9f';
-//
-//   let ContactModel = new Contact();
-//   let johnId = await ContactModel.create({FirstName: 'Joe', LastName: 'Master', Account: ACCOUNT});
-//   assert.equal(typeof johnId, 'string');
-//
-//   let john = await ContactModel.findById(johnId);
-//   assert.equal(john.LastName, 'Master');
-//
-//   await ContactModel.delete(johnId);
-// });

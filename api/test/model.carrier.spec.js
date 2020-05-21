@@ -54,8 +54,7 @@ describe('model.carrier', function () {
       let code = Code.create(session, {codeId: 1, text:'carrier code'})
       code = await code.save();
       assert.isDefined(code.codeId);
-      // ToDo: should use codeAdd(code) no direct pushing!
-      carrier.codes.push(code.id);
+      carrier.codeAdd(code);
       await carrier.save();
       carrier = await Carrier.findOne({carrierId : 3})
         .populate('codes');
@@ -68,8 +67,7 @@ describe('model.carrier', function () {
       code = await code.save();
       let carrier = Carrier.create(session, {carrierId: 4, locationNumber: 'c4', codes:[code]});
       carrier  = await carrier.save();
-      // ToDo: no direct push
-      carrier.codes.push(code);
+      carrier.codeAdd(code);
       carrier = await Carrier.findOne({carrierId : 4})
         .populate('codes');
       assert.equal(carrier.codes.length, 1);

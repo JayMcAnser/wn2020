@@ -14,4 +14,6 @@ describe('import-helper', () => {
     assert.equal(ImportHelper.makeNumber('10.0'), 1000)
     assert.equal(ImportHelper.makeNumber(10.2), 1020);
   });
+
+
 })

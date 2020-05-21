@@ -110,10 +110,11 @@ class LocationImport {
     try {
       Object.assign(dis, dataRec);
       // dis.objectSet(dataRec);
+      await dis.reSync();
       dis = await dis.save();
 
       // start converting lines of carriers
-      let sql = 'SELECT * FROM location2carrier where location_ID = ' + dis.locationId;
+      let sql = `SELECT * FROM location2carrier where location_ID = ${dis.locationId}`;
       let qry = await con.query(sql);
       if (qry.length) {
         for (let recIndex = 0; recIndex < qry.length; recIndex++) {

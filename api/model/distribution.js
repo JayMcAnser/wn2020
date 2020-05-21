@@ -7,6 +7,7 @@ const Schema = Mongoose.Schema;
 const ErrorTypes = require('error-types');
 const Logging = require('../lib/logging');
 const UndoHelper = require('mongoose-undo');
+const ModelHelper = require('./model-helper');
 const _ = require('lodash');
 
 const LineSchema = {
@@ -23,7 +24,11 @@ const LineSchema = {
   }
 };
 
-const DistributionSchema = {
+const DistributionExtendLayout = {
+  locationId: { type: String}, // the locationId of the DistributionLayout
+  exactInvoice: {type: String}
+}
+const DistributionLayout = Object.assign({
   locationId: String,
   code: { type: String },
   invoiceNumber: {type: String},
@@ -57,14 +62,50 @@ const DistributionSchema = {
   // for the undo definition
   created: UndoHelper.createSchema,
   line: [LineSchema],
-}
+}, DistributionExtendLayout);
 
+let DistributionSchema = new Schema(DistributionLayout);
+ModelHelper.upgradeBuilder('DistributionExtra', DistributionSchema, DistributionExtendLayout)
+//
+//
+// // the fields that are new (not in the mySQL, or overloaded) that are stored in a separate table
+// let DistributionExtraSchema = new Schema(DistributionExtendLayout);
+// const DistributionExtra = Mongoose.Model('DistributionExtra', DistributionExtraSchema);
+//
+// /**
+//  * Link our the distribution to the external data store
+//  */
+// DistributionSchema.post('save', async function(doc) {
+//   let extra = await DistributionExtra.findOne({locationId: doc.locationId});
+//   if (!extra) {
+//     extra = new DistributionExtra()
+//   }
+//   for (let key in DistributionExtendLayout) {
+//     if (!DistributionExtendLayout.hasOwnProperty(key)) { continue }
+//     extra[key] = doc[key];
+//   }
+//   await extra.save();
+// })
+//
+// /**
+//  * retrieves the data that was stored of site for synchronisation
+//  * @return Promise (Boolean) True: data changed, false, not change
+//  */
+// DistributionSchema.methods.reSync = async function() {
+//   let extra = await DistributionExtra.findOne({locationId: this.locationId});
+//   if (!extra) {
+//     return Promise.resolve(false); // nothing is stored
+//   }
+//   for (let key in DistributionExtendLayout) {
+//     if (!DistributionExtendLayout.hasOwnProperty(key)) { continue }
+//     this[key] = extra[key];
+//   }
+//   return Promise.resolve(true); // we must store the information
+// }
 
+DistributionSchema.plugin(UndoHelper.plugin);
 
-let DistributionModel = new Schema(DistributionSchema);
-DistributionModel.plugin(UndoHelper.plugin);
-
-DistributionModel.virtual('subTotalCosts')
+DistributionSchema.virtual('subTotalCosts')
   .get( function() {
     let result = 0;
     if (this.line && this.line.length) {
@@ -76,7 +117,7 @@ DistributionModel.virtual('subTotalCosts')
     }
     return result;
 });
-DistributionModel.virtual('totalCosts')
+DistributionSchema.virtual('totalCosts')
   .get( function() {
     let result = this.subTotalCosts;
     if (this.productionCosts) {
@@ -94,7 +135,7 @@ DistributionModel.virtual('totalCosts')
 /**
  * fill in the default contacts if none is given
  */
-DistributionModel.pre('save', function(next) {
+DistributionSchema.pre('save', function(next) {
   if (this.contact && ! this.invoice) {
     this.invoice = this.contact;
   }
@@ -106,7 +147,7 @@ DistributionModel.pre('save', function(next) {
 
 
 
-DistributionModel.methods.session = function(session) {
+DistributionSchema.methods.session = function(session) {
   this.__user = session.name;
   this.__reason = session.reason;
 }
@@ -115,7 +156,7 @@ DistributionModel.methods.session = function(session) {
  *
  * @param itemData Art or Carrier or {art:, [field]: ...} or { carrier: , [fields]}
  */
-DistributionModel.methods.lineAdd = function(itemData) {
+DistributionSchema.methods.lineAdd = function(itemData) {
   let itm = _.cloneDeep(itemData)
   if (itemData.art || itemData.carrier) {
     // and object with art or carrier
@@ -138,7 +179,7 @@ DistributionModel.methods.lineAdd = function(itemData) {
   this.line.push(itm);
 };
 
-DistributionModel.methods.lineUpdate = function(index, itemData) {
+DistributionSchema.methods.lineUpdate = function(index, itemData) {
   let ind = index;
   if (typeof index !== 'number') {
     for (ind = 0; ind < this.line.length; ind++) {
@@ -155,7 +196,7 @@ DistributionModel.methods.lineUpdate = function(index, itemData) {
   }
 };
 
-DistributionModel.methods.lineRemove = function(index) {
+DistributionSchema.methods.lineRemove = function(index) {
   let ind = index;
   if (typeof index !== 'number') {
     for (ind = 0; ind < this.line.length; ind++) {
@@ -172,8 +213,8 @@ DistributionModel.methods.lineRemove = function(index) {
   }
 };
 
-DistributionModel.methods.lineCount = function() {
+DistributionSchema.methods.lineCount = function() {
   return this.line.length;
 };
 
-module.exports = Mongoose.Model('Distribution', DistributionModel);
+module.exports = Mongoose.Model('Distribution', DistributionSchema);

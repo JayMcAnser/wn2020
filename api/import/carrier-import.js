@@ -77,10 +77,10 @@ const ArtToCarrierFieldMap = {
 class CarrierImport {
 
   constructor(options= {}) {
-    const STEP = 5;
+    const STEP = 50;
     this.session = options.session;
     this._limit = options.limit !== undefined ? options.limit : 0;
-    this._step = this._limit < STEP ? this._limit : STEP;
+    this._step = (this._limit && this._limit < STEP) ? this._limit : STEP;
     this._artImport = new ArtImport({session: this.session});
     this._codeImport = new CodeImport({session: this.session});
   }

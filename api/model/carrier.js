@@ -7,6 +7,7 @@ const Schema = Mongoose.Schema;
 const ArtFieldMap = require('./art').FieldMap;
 const CodeFieldMap = require('./code').ShortFieldMap;
 const UndoHelper = require('mongoose-undo');
+const ModelHelper = require('./model-helper');
 
 let ArtSchema = new Schema({
   art: {
@@ -36,7 +37,7 @@ let ArtSchema = new Schema({
  * carrier record
  */
 const CarrierLayout = {
-  carrierId: String,        // the org carrier id in WatsNext
+  carrierId: { type: String, index: true},        // the org carrier id in WatsNext
   type: String,
   locationNumber: String,
   searchCode: String,
@@ -109,6 +110,20 @@ CarrierSchema.methods.artUpdate = function(id, data) {
   }
 }
 
+CarrierSchema.methods.codeAdd = function(data) {
+  ModelHelper.addObjectId(this.codes, data)
+}
+CarrierSchema.methods.codeRemove = function(index) {
+  ModelHelper.removeObjectId(this.codes, index)
+}
+CarrierSchema.methods.codeSet = function(data) {
+  ModelHelper.setObjectIds(this.codes, data);
+}
 
-
-module.exports = Mongoose.Model('Carrier', CarrierSchema);
+const Carrier = Mongoose.Model('Carrier', CarrierSchema);
+async function run()
+{
+  await Carrier.syncIndexes();
+}
+run()
+module.exports = Carrier;
