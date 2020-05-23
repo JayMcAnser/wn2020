@@ -14,46 +14,31 @@
  *    await Account.save();
  *
  */
-const Endpoint = require('./endpoint');
+const ExactRecord = require('./endpoint').Record;
 const ExactModel = require('./endpoint').Model;
+const URL = '/crm/Contacts';
 
 
-class AccountRecord extends Endpoint {
-
+class ContactRecord extends ExactRecord {
   constructor(data, options = {}) {
-    super(Object.assign({}, options, { rootUrl: '/crm/Accounts'}));
-//    this.data = {};
+    super(data, Object.assign({}, options, { rootUrl: URL}));
   }
-
-
-
-  /**
-   * convert the internal structure to the exact structue
-   * @param data
-   */
-  convertToExact(data) {
-    return data
-  }
-
-
 }
 
 /**
  *
  * Global definition of an account
  */
-//
-// const Account = Object.assign({}, ExactModel, {
-//   newRecord(options) {
-//     return new AccountRecord(options)
-//   }
-// })
 
-class Account extends ExactModel {
-
+class Contact extends ExactModel {
   static create(data, options) {
-    return new AccountRecord(data, options);
+    return ExactModel.makeReactive(new ContactRecord(data, options))
+  }
+
+  static findById(id, options) {
+    let rec = ExactModel.makeReactive(new ContactRecord());
+    return rec.findById(id, options);
   }
 }
 
-module.exports = Account;
+module.exports = Contact;

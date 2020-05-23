@@ -64,6 +64,9 @@ class ExactConnection {
           return this.apiServer.request(error.config);
         });
       }
+      if (error.response && error.response.data && error.response.data.error) {
+        return Promise.reject(new Error(error.response.data.error.message.value))
+      }
       return Promise.reject(error); //this.status2ApiError(error));
     });
 

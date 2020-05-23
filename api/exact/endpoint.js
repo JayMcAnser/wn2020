@@ -11,6 +11,7 @@ class Endpoint {
     this._rootUrl = options.rootUrl;
     this._id = false;
     this._data = data;
+    this._removeFields = ['Metadata', 'Id', 'Created', 'Hid', 'Modified', 'StartDate']
   }
 
   // /**
@@ -38,6 +39,9 @@ class Endpoint {
     for (let key in this._data) {
       if (!this._data.hasOwnProperty(key)) { continue }
       d[camelCase(key, {pascalCase: true})] = this._data[key];
+    }
+    for (let l = 0; l < this._removeFields.length; l++) {
+      delete d[this._removeFields[l]];
     }
     return d;
   }
@@ -70,8 +74,9 @@ class Endpoint {
         return Promise.resolve(id);
       })
     } else {
-      let url = `${this._rootUrl}(guid'${id}')`;
-      return this._connection.put(url, this.asExact);
+      let url = `${this._rootUrl}(guid'${this._id}')`;
+      let d = this.asExact;
+      return this._connection.put(url, d);
     }
   }
 
@@ -87,7 +92,7 @@ class Endpoint {
 
   delete() {
     if (!this.isNew) {
-      let url = `${this._rootUrl}(guid'${id}')`;
+      let url = `${this._rootUrl}(guid'${this.id}')`;
       return this._connection.delete(url);
     }
     return Promise.resolve(true);
@@ -99,7 +104,7 @@ class ExactModel {
   static makeReactive(obj) {
     return new Proxy(obj, {
       get: function(obj, prop) {
-        if (obj[prop]) {
+        if (obj[prop] !== undefined) {
           return obj[prop]
         }
         switch (prop) {
@@ -109,6 +114,19 @@ class ExactModel {
             return obj._id
           default:
             return obj._data[prop];
+        }
+      },
+      set: function(obj, prop, value) {
+        if (obj[prop] !== undefined) {
+          obj[prop] = value;
+          return true;
+        }
+        switch (prop) {
+          case 'isNew': return false;
+          case 'id': return false;
+          default:
+            obj._data[prop] = value;
+            return true;
         }
       }
     })
@@ -137,3 +155,4 @@ class ExactModel {
 
 module.exports = Endpoint;
 module.exports.Model = ExactModel;
+module.exports.Record = Endpoint;

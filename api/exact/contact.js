@@ -7,13 +7,12 @@
  *    https://start.exactonline.nl/docs/HlpRestAPIResourcesDetails.aspx?name=CRMContacts
  *
  */
-const Endpoint = require('./endpoint');
+const ExactRecord = require('./endpoint').Record;
 const ExactModel = require('./endpoint').Model;
 const URL = '/crm/Contacts';
 
 
-class ContactRecord extends Endpoint {
-
+class ContactRecord extends ExactRecord {
   constructor(data, options = {}) {
     super(data, Object.assign({}, options, { rootUrl: URL}));
   }

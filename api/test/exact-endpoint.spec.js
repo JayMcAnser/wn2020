@@ -38,4 +38,33 @@ describe('exact - contact', function() {
     assert.equal(typeof contact.id, 'string');
     assert.equal(contact.lastName, 'Doe');
   })
+
+  it('update', async() => {
+    let contact = await Contact.findById(newId);
+    assert.equal(typeof contact.id, 'string');
+    assert.equal(contact.lastName, 'Doe');
+    contact.lastName = 'Done it';
+    await contact.save();
+    contact = await Contact.findById(newId);
+    assert.equal(contact.lastName, 'Done it');
+  })
+
+  it('update - error field does not exist', async() => {
+    let contact = await Contact.findById(newId);
+    assert.equal(contact.lastName, 'Done it');
+    contact.notAField = 'Some value';
+    try {
+      await contact.save();
+      assert.fail('Should throw an error')
+    } catch (e) {
+      assert.equal(e.message, 'Error processing request stream. The property name \'NotAField\' specified for type \'Exact.Web.Api.Models.Contact\' is not valid.')
+    }
+  })
+  it('delete', async() => {
+    let contact = await Contact.findById(newId);
+    assert.equal(typeof contact.id, 'string');
+    await contact.delete();
+    contact = await Contact.findById(newId);
+    assert.equal(contact, false)
+  })
 });
