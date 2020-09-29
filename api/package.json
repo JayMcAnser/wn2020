@@ -29,6 +29,7 @@
     "logger": "git+https://github.com/jaymcanser/logger.git",
     "mongoose": "^5.9.13",
     "mongoose-undo": "git+https://github.com/JayMcAnser/mongoose-undo-plugin.git",
+    "odata-query": "^6.0.0",
     "postmark": "^2.5.3",
     "uuid": "^3.4.0"
   },

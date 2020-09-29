@@ -37,7 +37,7 @@ class ExactConnection {
   constructor(options = {}) {
     this.writeRefreshToken = options.writeRefreshToken === undefined ? writeRefreshToken : options.writeRefreshToken;
     this.readRefreshToken = options.readRefreshToken === undefined ? readRefreshToken : options.readRefreshToken;
-    this._code = options.code === undefined ? false : options.code;
+    this._code = options.code === undefined ? Config.get('Exact.code') : options.code;
     this.apiServer = axios.create({
       baseURL: 'https://start.exactonline.nl/api'
     });
@@ -54,19 +54,41 @@ class ExactConnection {
     //   return request
     // });
     this.apiServer.interceptors.response.use(null, (error) => {
-      if (error.config && error.response && error.response.status === 401) {
+      if (error.config && error.response && error.response.status === 401 && error.config.url !== '/oauth2/token') {
         this._accessToken = false;
         return this.updateToken().then((token) => {
-          this.setAuthorization(token);
-          //   error.config.headers.Authorization = token;
-          // Here, the request data will be double stringified with qs.stringify,
-          // potentially leading to 422 responses or similar.
-          return this.apiServer.request(error.config);
+          if (token) {
+            this.setAuthorization(token);
+            //   error.config.headers.Authorization = token;
+            // Here, the request data will be double stringified with qs.stringify,
+            // potentially leading to 422 responses or similar.
+            return this.apiServer.request(error.config);
+          } else {
+            return Promise.reject('no token returned (refresh)');
+          }
         });
-      }
-      if (error.response && error.response.data && error.response.data.error) {
+      } else if (error.config && error.response && error.response.status === 401 && error.config.url === '/oauth2/token') {
+        // the refresh token is out of sync. Try logging in again
+        this._refreshToken = false;
+        return this.createAccessToken().then( (hasToken) => {
+          if (hasToken) {
+            return this.updateToken().then((token) => {
+              if (token) {
+                this.setAuthorization(token);
+                return this.apiServer.request(error.config);
+              } else {
+                return Promise.reject('no token returned (login)');
+              }
+            })
+          } else {
+            return Promise.reject('no token returned (create)');
+          }
+        })
+      } else if (error.response && error.response.data && error.response.data.error && error.response.data.error.message) {
         return Promise.reject(new Error(error.response.data.error.message.value))
-      }
+      } else if (error.response && error.response.data && error.response.data.error) {
+        return Promise.reject(new Error(`${error.response.data.error}${ error.response.data.error_description  ? ' (' + error.response.data.error_description + ')' : '' }`))
+      };
       return Promise.reject(error); //this.status2ApiError(error));
     });
 
@@ -126,7 +148,7 @@ class ExactConnection {
         this._tokenType = result.data.token_type;
         this.writeRefreshToken(this._refreshToken);
       } catch(e) {
-        Logging.error(`refresh exact token (${e.message})`);
+        Logging.error(`[exactConnection.updateToken] refresh exact token (${e.message})`);
         return false;
       }
     }
@@ -148,6 +170,7 @@ class ExactConnection {
     this._accessToken = false;
     this._refreshToken = false;
     try {
+      let o = querystring.stringify(tokenRequest);
       let result = await this.apiServer.post('/oauth2/token', querystring.stringify(tokenRequest));
       this._accessToken = result.data.access_token;
       if (Config.get('Setup.debug')) {

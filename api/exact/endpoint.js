@@ -4,6 +4,7 @@
 
 const connection = require('./exact-conection').exact;
 const camelCase = require('camelcase');
+const buildQuery = require('odata-query').default;
 
 class Endpoint {
   constructor(data = {}, options = {}) {
@@ -76,6 +77,7 @@ class Endpoint {
     } else {
       let url = `${this._rootUrl}(guid'${this._id}')`;
       let d = this.asExact;
+     // d = {lastName: 'Done it'}
       return this._connection.put(url, d);
     }
   }
@@ -88,6 +90,30 @@ class Endpoint {
       }
       return Promise.resolve(false);
     });
+  }
+
+  /**
+   * BE CAREFULL:
+   *   The fieldnames used are in Exact definition in the query NOT IN CAMEL_CASE !!!!!
+   *
+   * examples
+   *   https://github.com/techniq/odata-query
+   * @param query
+   */
+  find(query) {
+    let filter = buildQuery({ filter: query});
+    return this._connection.get(`${this._rootUrl}${filter}`).then( (recs) => {
+      if (recs && recs.length > 0) {
+        let result = [];
+        for (let l = 0; l < recs.length; l++) {
+          let r = new [this.constructor.name](this.fromExact(recs[l]));
+          result.push(r);
+        }
+        return Promise.resolve(result);
+      }
+      return Promise.resolve([]);
+    });
+
   }
 
   delete() {

@@ -6,7 +6,7 @@
  */
 const ErrorType = require('error-types');
 const Logging = require('../../lib/logging');
-const exact = require('../../exact/conection').exact;
+const exact = require('../../exact/exact-conection').exact;
 
 
 module.exports = getRoute = {

@@ -15,6 +15,18 @@ describe('exact - contact', function() {
 
   before( async () => {
     // we need any account. This is the quick and dirty way
+    /*
+      If this does not work, we must log in to Exact. That can not be done in the test but must be done from
+      the browser.
+      THe current url: https://start.exactonline.nl/api/oauth2/auth?client_id=ddc28ab0-dc93-4478-96a3-7495a7ea174e&redirect_uri=http://localhost:3000/exact&response_type=code&force_login=0
+      should be used with the user and password of exact.
+      Exact will call localhost:3000/exact
+
+      To accept the awnser call back from exact, run node index.js
+
+      Restart the server to update the definition
+
+     */
     let contacts = await exact.get('/crm/Contacts');
     assert.isTrue(contacts.length > 0, 'found contacts');
     account = contacts[0].Account;
@@ -60,6 +72,12 @@ describe('exact - contact', function() {
       assert.equal(e.message, 'Error processing request stream. The property name \'NotAField\' specified for type \'Exact.Web.Api.Models.Contact\' is not valid.')
     }
   })
+
+  // it('find', async() => {
+  //   let contacts = await Contact.find({LastName: { gt: 'B'}});
+  //   assert.isTrue(contact.length > 0);
+  //
+  // })
   it('delete', async() => {
     let contact = await Contact.findById(newId);
     assert.equal(typeof contact.id, 'string');

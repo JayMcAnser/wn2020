@@ -57,8 +57,9 @@
     ]
   },
   "Exact": {
+    "_doc": "To retrieve the code: https://start.exactonline.nl/api/oauth2/auth?client_id=ddc28ab0-dc93-4478-96a3-7495a7ea174e&redirect_uri=http://localhost:3000/exact&response_type=code&force_login=0",
     "refreshToken": false,
-    "code": false,
+    "code": "Z0Ws%21IAAAAKicJ7QpU7LNaKRaLk-ha1SfZk2bfKDktWW37WotcUM9QQEAAAFcHdSnfs2BlTH7mWBN_O8xmChQ5KT-ZF1fEUzpHJ9UpaS6ZrP0UZ18j3zELIcIM_C0egUJQXkD6wuSR2h4yWt-xOLaCbi8WJu5AxWFFiNyGMO5VNW-7uuqGtBD-Oc5N8wglFP56c3NRuaeKYrKawERT7pf8SWHfZiBi1_qOvxVqH7x4viTzmeVtaEMrS-c8T9hptWahyrbYBWfHLlltJu4-7704_bDXt8W_gWSGKgOtXZwm8BAsq-52vpx2SCDd5leAhw6hWkhpnKDxiw38pW3N--ehTuzyT3Sly9x2Q0X7BV0K--YEPOnKTGvx7jJCCKwmz59v7iiMiXI2VW6Ihdbldlkj2DWFoNrwQWkh5eDurp796EEAZRp3rCzw49Iy8JKbFwRSi60-Np_33EDLIGf30YbrSAUb-7Ma9aaVaOuJA",
     "clientId": "ddc28ab0-dc93-4478-96a3-7495a7ea174e",
     "clientSecret": "TEnnwNqFwmre",
     "authUrl": "http://localhost:3000/exact"

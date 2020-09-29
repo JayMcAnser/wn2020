@@ -32,6 +32,16 @@ class Contact extends ExactModel {
     let rec = ExactModel.makeReactive(new ContactRecord());
     return rec.findById(id, options);
   }
+
+  static find(query) {
+    let rec = new ContactRecord();
+    return rec.find(query).then( (recs) => {
+      for (let l = 0; l < recs.length; l++) {
+        recs[l] = ExactRecord.makeReactive(recs[l]);
+      }
+      return Promise.resolve(recs);
+    })
+  }
 }
 
 module.exports = Contact;

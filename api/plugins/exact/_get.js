@@ -6,7 +6,7 @@
  */
 const ErrorType = require('error-types');
 const Logging = require('../../lib/logging');
-const exact = require('../../exact/conection').exact;
+const exact = require('../../exact/exact-conection').exact;
 
 
 module.exports = getRoute = {
@@ -30,7 +30,7 @@ module.exports = getRoute = {
         }
       } else {
         return {
-          error: 'cissing code'
+          error: 'missing code'
         }
       }
     } catch (err) {
