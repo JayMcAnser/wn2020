@@ -15,6 +15,7 @@ const ContactSchema = new Schema({
   isRights : Boolean,
   isContact: Boolean,
   isArtist: Boolean,
+  percentage: Number,
 })
 
 const AgentLayout = {

@@ -20,3 +20,7 @@ module.exports.QuerySession = function() {
     return this;
   }
 }
+
+module.exports.replaceAll = (str, oldVal, newVal) => {
+  return str.split(oldVal).join(newVal)
+}

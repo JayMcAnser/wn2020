@@ -7,6 +7,7 @@ const chai = require('chai');
 const assert = chai.assert;
 const Distribution = require('../model/distribution');
 const Contact = require('../model/contact');
+const Agent = require('../model/agent');
 const Art = require('../model/art');
 const Session = require('../lib/session');
 const Util = require('../lib/util');
@@ -182,6 +183,33 @@ describe('model.distribution', () => {
       assert.isDefined(distr);
       assert.isDefined(distr.invoice);
       assert.isDefined(distr.contact);
+    })
+  });
+
+  describe('royalties', () => {
+    let art1;
+    let distr;
+    const DIS_ID = 4;
+    const DIS_CODE = '2000-04'
+    const DIS_ART_TITLE = 'dis.art.4';
+    const DIS_ART_ID = '202';
+
+    before( async () => {
+      session = new Session('art.spec')
+      await Distribution.deleteMany({});
+      await Art.deleteMany({});
+      await Agent.deleteMany({});
+      await Contact.deleteMany({})
+
+      await Contact.insertMany([
+        { addressId: 1, type: 'Man', guid:'addr_1', firstName: 'Jay', name: 'McAnser'},
+        { addressId: 2, type: 'Institution', guid: 'addr_2', name: 'Museum of Modern Art'}
+      ])
+    });
+
+    it ('has contacts', async() => {
+      let cnt = await Contact.find({})
+      assert.equal(cnt.length, 2)
     })
   })
 });

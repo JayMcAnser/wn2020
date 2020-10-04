@@ -30,6 +30,7 @@ const ModelHelper = require('./model-helper');
 const ROLE_CREATOR = 'creator';
 const ROLE_CONTRIBUTOR = 'contributor';
 const ROLE_SUBJECT = 'sublect';
+const Config = require('../lib/default-values');
 
 
 const ArtistSchema = new Schema({
@@ -74,6 +75,10 @@ const ArtLayout = Object.assign({
   projection: Boolean,
   carriers: String,
   objects: String,
+  royaltiesPercentage: {
+    type: Number,
+    default: 100
+  },
   royaltiesError: String,
 
   codes: [{
@@ -311,6 +316,41 @@ ArtSchema.methods.urlSet = function(urls) {
   let vm = this;
   urls.filter(x => !vm.urls.includes(x)).map((x) => { vm.urlAdd(x) });
   vm.urls.filter(x => !urls.includes(x)).map( (x) => { vm.urlRemove(x)});
+}
+
+/**
+ * validate the royalties definition.
+ * store the error in the royaltiesError or reset this to an empty string
+ *
+ * @return Boolean True if it's value
+ */
+ArtSchema.methods.royaltiesValidate = function() {
+  let errors = [];
+  // validate the art
+  if (this.royaltiesPercentage !== undefined) {
+    if (this.royaltiesPercentage < 0) {
+      errors.push('the royalties must be larger the 0')
+    }
+    if (this.royaltiesPercentage > 100) {
+      errors.push('the max royalties must be less the 100')
+    }
+  }
+
+  // validate the agent definition
+  let percentage = 0;
+  if (this.agents === undefined || this.agents.length === 0) {
+    errors.push('no agent found')
+  } else {
+    for (let agentIndex = 0; agentIndex < this.agents.length; agentIndex++) {
+      let perc = this.agents[agentIndex].percentage === undefined ? Config.value(Config.royaltiesArtPercentage, 70, 'default percentage for an agent') : this.agents[agentIndex].percentage
+      percentage += perc;
+    }
+    if (percentage > 100) {
+      errors.push('the percentage is more the 100%')
+    }
+  }
+  this.royaltiesError = errors.length ? errors.join('\n') : ''
+  return errors.length === 0
 }
 
 

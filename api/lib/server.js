@@ -8,7 +8,12 @@ const Hapi = require('@hapi/hapi');
 
 const server = new Hapi.Server({
   port: Config.Server.Connection.port,
-  host: 'localhost'
+  host: 'localhost',
+  // routes: {
+  //   cors: {
+  //     origin: ['*'] // an array of origins or 'ignore'
+  //   }
+  // }
 });
 
 process.on('unhandledRejection', (err) => {

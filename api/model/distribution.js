@@ -8,7 +8,35 @@ const ErrorTypes = require('error-types');
 const Logging = require('../lib/logging');
 const UndoHelper = require('mongoose-undo');
 const ModelHelper = require('./model-helper');
+const Art = require('./art');
 const _ = require('lodash');
+const Util = require('../lib/util');
+const Config = require('../lib/default-values');
+
+
+const RoyaltieSchema  = Mongoose.Schema( {
+  contactPercentage: Number,
+  agentPercentage: Number,
+  artPercentage: Number,
+  contact:  {
+    type: Schema.Types.ObjectId,
+    ref: 'Contact'
+  },
+  agent:  {
+    type: Schema.Types.ObjectId,
+    ref: 'Agent'
+  },
+  art:  {
+    type: Schema.Types.ObjectId,
+    ref: 'Art'
+  },
+
+})
+
+RoyaltieSchema.virtual('amount').get(function() {
+  const price = this.parent().price;
+  return price * (this.contactPercentage / 100) * (this.agentPercentage / 100) * (this.artPercentage / 100)
+})
 
 const LineSchema = {
   order: {type: String},     // the order of the lines
@@ -21,7 +49,9 @@ const LineSchema = {
   carrier: {
     type: Schema.ObjectId,
     ref: 'Carrier'
-  }
+  },
+  // royalties can be to multiple person.
+  royalties: [RoyaltieSchema]
 };
 
 const DistributionExtendLayout = {
@@ -58,6 +88,7 @@ const DistributionLayout = Object.assign({
   shippingCosts: {type: Number},
   otherCosts: {type: Number},
   otherCostsText: {type: String},
+  royaltiesErrors: {type: String},
 
   // for the undo definition
   created: UndoHelper.createSchema,
@@ -66,42 +97,6 @@ const DistributionLayout = Object.assign({
 
 let DistributionSchema = new Schema(DistributionLayout);
 ModelHelper.upgradeBuilder('DistributionExtra', DistributionSchema, DistributionExtendLayout)
-//
-//
-// // the fields that are new (not in the mySQL, or overloaded) that are stored in a separate table
-// let DistributionExtraSchema = new Schema(DistributionExtendLayout);
-// const DistributionExtra = Mongoose.Model('DistributionExtra', DistributionExtraSchema);
-//
-// /**
-//  * Link our the distribution to the external data store
-//  */
-// DistributionSchema.post('save', async function(doc) {
-//   let extra = await DistributionExtra.findOne({locationId: doc.locationId});
-//   if (!extra) {
-//     extra = new DistributionExtra()
-//   }
-//   for (let key in DistributionExtendLayout) {
-//     if (!DistributionExtendLayout.hasOwnProperty(key)) { continue }
-//     extra[key] = doc[key];
-//   }
-//   await extra.save();
-// })
-//
-// /**
-//  * retrieves the data that was stored of site for synchronisation
-//  * @return Promise (Boolean) True: data changed, false, not change
-//  */
-// DistributionSchema.methods.reSync = async function() {
-//   let extra = await DistributionExtra.findOne({locationId: this.locationId});
-//   if (!extra) {
-//     return Promise.resolve(false); // nothing is stored
-//   }
-//   for (let key in DistributionExtendLayout) {
-//     if (!DistributionExtendLayout.hasOwnProperty(key)) { continue }
-//     this[key] = extra[key];
-//   }
-//   return Promise.resolve(true); // we must store the information
-// }
 
 DistributionSchema.plugin(UndoHelper.plugin);
 
@@ -216,5 +211,86 @@ DistributionSchema.methods.lineRemove = function(index) {
 DistributionSchema.methods.lineCount = function() {
   return this.line.length;
 };
+
+/**
+ * retrieve all information for the royalties calculation
+ */
+DistributionSchema.methods.royaltiesCalc = async function() {
+  let error = [];
+  for (let indexLine = 0; indexLine < this.line.length; indexLine++) {
+    let line = this.line[indexLine];
+    line.royalties = [];
+    let artPercentage = 0;
+    let agentPercentage = 0;
+    let contactPercentage = 0;
+
+    if (line.price > 0) {
+      let royalty = {}
+      let art = await Art.findById(line.art).populate({
+        path: 'agents.agent',
+        populate: {
+           path: 'contacts.contact'
+        }
+      });
+      if (art ) {
+        // the percentage is
+        art.royaltiesValidate();
+        if (art.royaltiesError !== '') {
+          let s = Util.replaceAll('xxx', 'x', 'y')
+          error.push(`line ${indexLine}: ` + Util.replaceAll(art.royaltiesError, '\n', `\nline ${indexLine}: `))
+        }
+        artPercentage = Art.royaltiesPercentage === undefined ? Config.value(Config.royaltiesArtPercentage, 100) : Art.royaltiesPercentage;
+        royalty.artPercentage = artPercentage
+        royalty.price = line.price;
+        royalty.art = art._id;
+        for (let indexAgent = 0; indexAgent < art.agents.length; indexAgent++) {
+          let agent = art.agents[indexAgent].agent;
+          if (agent) {
+            // the percentage is defined in the relation between the art and the agent
+            let percAgent = art.agents[indexAgent].percentage === undefined ? 100 : art.agents[indexAgent].percentage;
+            if (percAgent > 0) {
+              royalty.agentPercentage = percAgent;
+              agentPercentage += percAgent;
+
+              if (agent.contacts.length === 0) {
+                error.push(`line ${indexLine}: no contact found for agent "${agent.name}"`)
+              } else {
+                royalty.agent = agent._id;
+                for (let indexContact = 0; indexContact < agent.contacts.length; indexContact++) {
+                  let contact = agent.contacts[indexContact].contact;
+                  let percContact = agent.contacts[indexContact].percentage === undefined ? 100 : agent.contacts[indexContact].percentage;
+
+                  if (contact) {
+                    royalty.contactPercentage = percContact
+                    contactPercentage += percContact
+                    royalty.contact = contact._id;
+                    line.royalties.push(royalty);
+                  } else {
+                    Logging.error(`[royaltiesCalc.${this._id}] contact (${agent.contacts[indexContact].contact}) use in art: (${art.agents[indexAgent]}) used by art ${line.art} does not exist`)
+                  }
+                }
+              }
+            }
+          } else {
+            Logging.error(`[royaltiesCalc.${this._id}] agent (${art.agents[indexAgent]}) used by art ${line.art} does not exist`)
+          }
+        }
+      } else {
+        error.push(`line ${indexLine}: no art found`)
+      }
+      // validate the royalties
+      if (royalty.artPercentage > 100) {
+        error.push(`line ${indexLine}: art percentage is large then 100`)
+      }
+      if (agentPercentage > 100) {
+        error.push(`line ${indexLine}: agent percentage is large then 100`)
+      }
+      if (contactPercentage > 100) {
+        error.push(`line ${indexLine}: contact percentage is large then 100`)
+      }
+    }
+  }
+  this.royaltiesError = error.length ? error.join('\n') : '';
+}
 
 module.exports = Mongoose.Model('Distribution', DistributionSchema);
