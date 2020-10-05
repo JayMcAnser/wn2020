@@ -13,7 +13,12 @@ const Config = require('config');
  */
 const getValue = (key, defaultValue) => {
   // TODO: build a reader for the config
-  return defaultValue
+  switch (key) {
+    case 'doc.menu': return '[Home](http://localhost:3000/doc/)';
+    case 'doc.rootUrl': return 'http://localhost:3000/doc/';
+    default:
+      return defaultValue
+  }
 }
 
 module.exports.value = getValue;

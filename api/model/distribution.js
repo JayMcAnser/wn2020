@@ -30,7 +30,6 @@ const RoyaltieSchema  = Mongoose.Schema( {
     type: Schema.Types.ObjectId,
     ref: 'Art'
   },
-
 })
 
 RoyaltieSchema.virtual('amount').get(function() {
@@ -51,6 +50,7 @@ const LineSchema = {
     ref: 'Carrier'
   },
   // royalties can be to multiple person.
+  isManualRoyalties: Boolean, // if true the calculation of the royalties can not be done
   royalties: [RoyaltieSchema]
 };
 
@@ -213,85 +213,87 @@ DistributionSchema.methods.lineCount = function() {
 };
 
 /**
- * retrieve all information for the royalties calculation
+ * calculate all information for the royalties calculation
  */
 DistributionSchema.methods.royaltiesCalc = async function() {
-  let error = [];
+  let errors = [];
   for (let indexLine = 0; indexLine < this.line.length; indexLine++) {
     let line = this.line[indexLine];
-    line.royalties = [];
-    let artPercentage = 0;
-    let agentPercentage = 0;
-    let contactPercentage = 0;
+    if (!line.isManualRoyalties) { // manual is never recalulated
+      line.royalties = [];
+      let artPercentage = 0;
+      let agentPercentage = 0;
+      let contactPercentage = 0;
 
-    if (line.price > 0) {
-      let royalty = {}
-      let art = await Art.findById(line.art).populate({
-        path: 'agents.agent',
-        populate: {
-           path: 'contacts.contact'
-        }
-      });
-      if (art ) {
-        // the percentage is
-        if (!art.royaltiesValidate()) {
-          let s = Util.replaceAll('xxx', 'x', 'y')
-          error.push(`line ${indexLine}: ` + Util.replaceAll(art.royaltiesError, '\n', `\nline ${indexLine}: `))
-        }
-        artPercentage = Art.royaltiesPercentage === undefined ? Config.value(Config.royaltiesArtPercentage, 100) : Art.royaltiesPercentage;
-        royalty.artPercentage = artPercentage
-        royalty.price = line.price;
-        royalty.art = art._id;
-        for (let indexAgent = 0; indexAgent < art.agents.length; indexAgent++) {
-          let agent = art.agents[indexAgent].agent;
-          if (agent) {
-            if (!agent.royaltiesValidate()) {
-              let s = Util.replaceAll('xxx', 'x', 'y')
-              error.push(`line ${indexLine}: ` + Util.replaceAll(agent.royaltiesError, '\n', `\nline ${indexLine}: `))
-            }
-            // the percentage is defined in the relation between the art and the agent
-            let percAgent = art.agents[indexAgent].percentage === undefined ? 100 : art.agents[indexAgent].percentage;
-            if (percAgent > 0) {
-              royalty.agentPercentage = percAgent;
-              agentPercentage += percAgent;
+      if (line.price > 0) {
+        let royalty = {}
+        let art = await Art.findById(line.art).populate({
+          path: 'agents.agent',
+          populate: {
+            path: 'contacts.contact'
+          }
+        });
+        if (art) {
+          // the percentage is
+          if (!art.royaltiesValidate()) {
+            let s = Util.replaceAll('xxx', 'x', 'y')
+            errors.push(`line ${indexLine}: ` + Util.replaceAll(art.royaltiesError, '\n', `\nline ${indexLine}: `))
+          }
+          artPercentage = Art.royaltiesPercentage === undefined ? Config.value(Config.royaltiesArtPercentage, 100) : Art.royaltiesPercentage;
+          royalty.artPercentage = artPercentage
+          royalty.price = line.price;
+          royalty.art = art._id;
+          for (let indexAgent = 0; indexAgent < art.agents.length; indexAgent++) {
+            let agent = art.agents[indexAgent].agent;
+            if (agent) {
+              if (!agent.royaltiesValidate()) {
+                let s = Util.replaceAll('xxx', 'x', 'y')
+                errors.push(`line ${indexLine}: ` + Util.replaceAll(agent.royaltiesError, '\n', `\nline ${indexLine}: `))
+              }
+              // the percentage is defined in the relation between the art and the agent
+              let percAgent = art.agents[indexAgent].percentage === undefined ? 100 : art.agents[indexAgent].percentage;
+              if (percAgent > 0) {
+                royalty.agentPercentage = percAgent;
+                agentPercentage += percAgent;
 
-              if (agent.contacts.length > 0) {
-                royalty.agent = agent._id;
-                for (let indexContact = 0; indexContact < agent.contacts.length; indexContact++) {
-                  let contact = agent.contacts[indexContact].contact;
-                  let percContact = agent.contacts[indexContact].percentage === undefined ? 100 : agent.contacts[indexContact].percentage;
+                if (agent.contacts.length > 0) {
+                  royalty.agent = agent._id;
+                  for (let indexContact = 0; indexContact < agent.contacts.length; indexContact++) {
+                    let contact = agent.contacts[indexContact].contact;
+                    let percContact = agent.contacts[indexContact].percentage === undefined ? 100 : agent.contacts[indexContact].percentage;
 
-                  if (contact) {
-                    royalty.contactPercentage = percContact
-                    contactPercentage += percContact
-                    royalty.contact = contact._id;
-                    line.royalties.push(royalty);
-                  } else {
-                    Logging.error(`[royaltiesCalc.${this._id}] contact (${agent.contacts[indexContact].contact}) use in art: (${art.agents[indexAgent]}) used by art ${line.art} does not exist`)
+                    if (contact) {
+                      royalty.contactPercentage = percContact
+                      contactPercentage += percContact
+                      royalty.contact = contact._id;
+                      line.royalties.push(royalty);
+                    } else {
+                      Logging.errors(`[royaltiesCalc.${this._id}] contact (${agent.contacts[indexContact].contact}) use in art: (${art.agents[indexAgent]}) used by art ${line.art} does not exist`)
+                    }
                   }
                 }
               }
+            } else {
+              Logging.errors(`[royaltiesCalc.${this._id}] agent (${art.agents[indexAgent]}) used by art ${line.art} does not exist`)
             }
-          } else {
-            Logging.error(`[royaltiesCalc.${this._id}] agent (${art.agents[indexAgent]}) used by art ${line.art} does not exist`)
           }
+        } else {
+          errors.push(`line ${indexLine}: no art found`)
         }
-      } else {
-        error.push(`line ${indexLine}: no art found`)
-      }
-      // validate the royalties
-      if (royalty.artPercentage > 100) {
-        error.push(`line ${indexLine}: art percentage is large then 100`)
-      }
-      if (agentPercentage > 100) {
-        error.push(`line ${indexLine}: agent percentage is large then 100`)
-      }
-      if (contactPercentage > 100) {
-        error.push(`line ${indexLine}: contact percentage is large then 100`)
+        // validate the royalties
+        if (royalty.artPercentage > 100) {
+          errors.push(`line ${indexLine}: art percentage is large then 100`)
+        }
+        if (agentPercentage > 100) {
+          errors.push(`line ${indexLine}: agent percentage is large then 100`)
+        }
+        if (contactPercentage > 100) {
+          errors.push(`line ${indexLine}: contact percentage is large then 100`)
+        }
       }
     }
   }
-  this.royaltiesError = error.length ? error.join('\n') : '';
+  this.royaltiesError = errors.length ? errors.join('\n') : '';
 }
 
 module.exports = Mongoose.Model('Distribution', DistributionSchema);

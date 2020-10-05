@@ -2,10 +2,16 @@
  * System wide loading of the plugins
  * returns the plugins array
  *
- * version 0.1 jvk 2020-03-14
+ * version 0.2 jay 2020-10-05
  */
 
 module.exports = [
+  {
+    plugin: require('./doc'),
+    routes: {
+      prefix: '/doc'
+    },
+  },
   {
     plugin: require('./info'),
     routes: {
