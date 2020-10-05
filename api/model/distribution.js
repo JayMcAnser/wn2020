@@ -234,8 +234,7 @@ DistributionSchema.methods.royaltiesCalc = async function() {
       });
       if (art ) {
         // the percentage is
-        art.royaltiesValidate();
-        if (art.royaltiesError !== '') {
+        if (!art.royaltiesValidate()) {
           let s = Util.replaceAll('xxx', 'x', 'y')
           error.push(`line ${indexLine}: ` + Util.replaceAll(art.royaltiesError, '\n', `\nline ${indexLine}: `))
         }
@@ -246,15 +245,17 @@ DistributionSchema.methods.royaltiesCalc = async function() {
         for (let indexAgent = 0; indexAgent < art.agents.length; indexAgent++) {
           let agent = art.agents[indexAgent].agent;
           if (agent) {
+            if (!agent.royaltiesValidate()) {
+              let s = Util.replaceAll('xxx', 'x', 'y')
+              error.push(`line ${indexLine}: ` + Util.replaceAll(agent.royaltiesError, '\n', `\nline ${indexLine}: `))
+            }
             // the percentage is defined in the relation between the art and the agent
             let percAgent = art.agents[indexAgent].percentage === undefined ? 100 : art.agents[indexAgent].percentage;
             if (percAgent > 0) {
               royalty.agentPercentage = percAgent;
               agentPercentage += percAgent;
 
-              if (agent.contacts.length === 0) {
-                error.push(`line ${indexLine}: no contact found for agent "${agent.name}"`)
-              } else {
+              if (agent.contacts.length > 0) {
                 royalty.agent = agent._id;
                 for (let indexContact = 0; indexContact < agent.contacts.length; indexContact++) {
                   let contact = agent.contacts[indexContact].contact;

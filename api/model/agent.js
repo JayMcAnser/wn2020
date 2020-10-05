@@ -38,7 +38,8 @@ const AgentLayout = {
   codes: [{
     type: Schema.ObjectId,
     ref: 'Code'
-  }]
+  }],
+  royaltiesError: String,
 };
 
 let AgentSchema = new Schema(AgentLayout);
@@ -121,32 +122,36 @@ AgentSchema.methods.codeAdd = function(code) {
  */
 AgentSchema.methods.codeRemove = function (index) {
   ModelHelper.removeObjectId(this.codes, index);
-  // if (typeof index === 'object') {
-  //   let idString = index._id ? index._id.toString() : index.toString();
-  //   index = this.codes.findIndex( (c) => { return c.toString() === idString})
-  // }
-  // if (index >= 0 && index < this.codes.length) {
-  //   this.codes.splice(index, 1);
-  // }
 }
 
 AgentSchema.methods.codeSet = function(codes) {
   ModelHelper.setObjectIds(this.codes, codes);
-  // let vm = this;
-  // // codes not yet in vm.codes
-  // let add = codes.filter(x => {
-  //   return vm.codes.findIndex( (k) => {
-  //     return x._id.toString() === k.toString()
-  //   }) < 0;
-  // });
-  //
-  // let remove = vm.codes.filter(x => {
-  //   return codes.findIndex( (k) => {
-  //     return x._id.toString() === k._id.toString()
-  //   }) < 0
-  // })
-  // add.forEach((x) => { vm.codeAdd(x) });
-  // remove.forEach( (x) => { vm.codeRemove(x)});
 }
+
+/**
+ * validate the royalties definition storing the result in royaltiesError
+ *
+ * - rule: there should be atleast on contact
+ * - rule: total of contact.percentage must be 100
+ *
+ * @return Boolean true if it valid
+ */
+AgentSchema.methods.royaltiesValidate = function() {
+  let errors = [];
+  if (this.contacts === undefined || this.contacts.length === 0) {
+    errors.push('no contacts defined')
+  } else {
+    let perc = 0;
+    for (let index = 0; index < this.contacts.length; index++) {
+      perc += this.contacts[index].percentage
+    }
+    if (perc !== 100) {
+      errors.push('total of percentage should be 100%')
+    }
+  }
+  this.royaltiesError = errors.length ? errors.join('\n') : '';
+  return errors.length === 0
+}
+
 
 module.exports = Mongoose.Model('Agent', AgentSchema);

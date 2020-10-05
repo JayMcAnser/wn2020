@@ -128,7 +128,7 @@ describe('model.distributio.royalties', () => {
     await dist[3].royaltiesCalc();
     await dist[3].save();
     assert.equal(dist[3].lineCount(), 1);
-    assert.equal(dist[3].royaltiesError, 'line 0: no contact found for agent "Artist 4"');
+    assert.equal(dist[3].royaltiesError, 'line 0: no contacts defined');
   });
 
   it('multiple artists', async () => {

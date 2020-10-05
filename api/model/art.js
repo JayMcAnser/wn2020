@@ -322,7 +322,11 @@ ArtSchema.methods.urlSet = function(urls) {
  * validate the royalties definition.
  * store the error in the royaltiesError or reset this to an empty string
  *
- * @return Boolean True if it's value
+ * - rule: art.percentage should be between 0 and 100
+ * - rule: art should have an agent
+ * - rule: agent. percentage should be less or equal 100
+ *
+ * @return Boolean True if it's valid
  */
 ArtSchema.methods.royaltiesValidate = function() {
   let errors = [];
